@@ -41,6 +41,8 @@
 - [inspect-auth-gating-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-auth-gating-state.ps1)
 - [inspect-bridge-gating-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-bridge-gating-state.ps1)
 - [clear-grove-cache.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/clear-grove-cache.ps1)
+- [sweep-event-logging-threshold.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-threshold.ps1)
+- [sweep-event-logging-matrix.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-matrix.ps1)
 - [prepare-trusted-capture-workspace.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/prepare-trusted-capture-workspace.ps1)
 - [probe-growthbook-eval-direct.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-growthbook-eval-direct.ps1)
 - [extract_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/extract_signals.py)
@@ -325,6 +327,15 @@
   - `external`
   - `arrayBuffers`
   - `cpuPercent`
+- 当前阈值结论：
+  - `RepeatCount=1`
+    在 `DelayMilliseconds=0 / 250 / 1000` 上都不会触发
+  - `RepeatCount=2`
+    已确认属于 `delay-sensitive` 命中区间
+  - `RepeatCount=3`
+    是当前跨三组 delay 的稳定下界
+- 推荐研究入口：
+  - [event-logging-threshold-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-threshold-workflow.md)
 - 当前未完全验证：
   当前 headless 最小请求已经确认这一路会发，但在 gateway 场景下它仍然走 direct-host side channel，而不是经过 gateway
 - 最新实抓：
@@ -333,8 +344,9 @@
   - 同一次抓包里的 `/v1/messages` 已经是 canonical device
 - via-gateway 补充：
   在 trusted `via-gateway` 的 `managed-oauth` 路径下，最新 threshold sweep 已确认：
-  - `RepeatCount=1`、`2` 不稳定
-  - `RepeatCount=3`、`5` 已重新抓到 `/api/event_logging/v2/batch`
+  - `RepeatCount=1` 在当前测试的 `0 / 250 / 1000ms` 上都不触发
+  - `RepeatCount=2` 不是简单“不稳定”，而是明确 `delay-sensitive`
+  - `RepeatCount=3` 是当前跨三组 delay 的稳定下界
 - 模式注意：
   `quiet mode` 下 1P event logging 会被 privacy level 直接关闭
 

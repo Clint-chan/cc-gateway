@@ -12,6 +12,7 @@
 
 1. 冻结 `event_logging` 的触发阈值研究方法
 2. 把“单次没看到”与“这条链真的没发”严格区分开
+3. 把 `RepeatCount` 和 `DelayMilliseconds` 的组合效应收成可复跑矩阵
 
 ## 为什么要单独做
 
@@ -56,8 +57,16 @@
 统一使用：
 
 - [sweep-event-logging-threshold.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-threshold.ps1)
+- [sweep-event-logging-matrix.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-matrix.ps1)
 
-它会为每个 `RepeatCount` 自动执行：
+其中：
+
+- `sweep-event-logging-threshold.ps1`
+  负责单个 `DelayMilliseconds` 下的 `RepeatCount` sweep
+- `sweep-event-logging-matrix.ps1`
+  负责把多个 `DelayMilliseconds` 串起来，输出二维矩阵
+
+阈值脚本会为每个 `RepeatCount` 自动执行：
 
 1. 启动 trusted `via-gateway` 双通道 capture
 2. 运行对应次数的最小 probe
@@ -77,6 +86,24 @@ powershell -ExecutionPolicy Bypass -File .\scripts\sweep-event-logging-threshold
 - `RepeatCounts=1,2,3`
 - `DelayMilliseconds=250`
 - 并且现在已经兼容 PowerShell 的 `-RepeatCounts 1,2` 这种逗号写法
+
+### 二维矩阵
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\sweep-event-logging-matrix.ps1 -RepeatCounts 1,2,3 -DelayValues 0,250,1000
+```
+
+默认矩阵脚本会：
+
+1. 对每个 `DelayMilliseconds` 调一次阈值脚本
+2. 保留每个 `RepeatCount` 的结构化结果
+3. 输出最终合并矩阵
+
+如果需要把结果交给后续脚本或归档系统处理，可以额外加：
+
+```powershell
+-JsonPath artifacts\captures\event-logging-matrix\current-matrix.json
+```
 
 ## 指定参数
 
@@ -104,6 +131,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\sweep-event-logging-threshold
 artifacts/captures/event-logging-threshold/
 ```
 
+矩阵脚本默认归档根目录则建议落到：
+
+```text
+artifacts/captures/event-logging-matrix/
+```
+
 ## 输出解释
 
 脚本输出一张表，重点看这些列：
@@ -126,7 +159,7 @@ artifacts/captures/event-logging-threshold/
 
 ## 当前经验基线
 
-### 2026-04-03 实测
+### 2026-04-03 单轴基线
 
 固定条件：
 
@@ -163,6 +196,52 @@ artifacts/captures/event-logging-threshold/
 - `3` 次是当前已验证的可复现下界
 - `2` 次仍属于偶发命中区间
 
+### 2026-04-03 二维矩阵复核
+
+固定条件：
+
+- workspace:
+  `C:\Users\94503\cc-alignment-capture\trusted-eval`
+- auth mode:
+  `managed-oauth`
+- probe:
+  `claude -p "hello"`
+- 结构化证据：
+  [event_logging_matrix_2026-04-03.json](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/event_logging_matrix_2026-04-03.json)
+
+| DelayMilliseconds | RepeatCount | EventDirectCount | EvalDirectCount | 当前结论 |
+| --- | --- | --- | --- | --- |
+| `0` | `1` | `0` | `2` | 单次仍不足以触发 |
+| `0` | `2` | `1` | `4` | `2` 次可命中，但不是所有 delay 都命中 |
+| `0` | `3` | `3` | `6` | 稳定出现，且会出现多批 `event_logging` |
+| `250` | `1` | `0` | `2` | 单次仍不足以触发 |
+| `250` | `2` | `0` | `4` | 当前明确 miss，说明 `2` 次存在 delay 敏感性 |
+| `250` | `3` | `1` | `6` | 稳定出现 |
+| `1000` | `1` | `0` | `2` | 单次仍不足以触发 |
+| `1000` | `2` | `1` | `4` | `2` 次再次命中，进一步证明它是 delay-sensitive |
+| `1000` | `3` | `1` | `6` | 稳定出现 |
+
+这轮矩阵把原来的“一维经验结论”升级成了更精确的事实：
+
+- `RepeatCount=1`
+  在当前测试的 `0 / 250 / 1000ms` 三个 delay 上都不会触发 `event_logging`
+- `RepeatCount=2`
+  不是简单的“不稳定”，而是明确存在 `DelayMilliseconds` 敏感性：
+  - `0ms` 命中
+  - `250ms` miss
+  - `1000ms` 命中
+- `RepeatCount=3`
+  是当前已验证、跨这三组 delay 都成立的最小稳定下界
+
+所以当前最合理的冻结说法已经不再是：
+
+- `3` 次在 `250ms` 下能复现
+
+而是：
+
+- `3` 次是当前跨 `0 / 250 / 1000ms` 都成立的最小稳定下界
+- `2` 次属于 delay-sensitive 命中区间，不能写成稳定阈值
+
 ## 当前使用建议
 
 当前阶段先优先扫这三组：
@@ -171,15 +250,17 @@ artifacts/captures/event-logging-threshold/
 2. `RepeatCount=2`
 3. `RepeatCount=3`
 
-如果这三组已经把下界锁住，再补：
+再优先补这三组 delay：
 
-4. `RepeatCount=5`
+4. `DelayMilliseconds=0`
+5. `DelayMilliseconds=250`
+6. `DelayMilliseconds=1000`
 
-只有这些还不能解释现象，再去改：
+只有这两组轴都还不能解释现象，再去改：
 
-- `DelayMilliseconds`
 - 具体 probe 类型
 - workspace 初始状态
+- 更长的 post-run 等待
 
 ## 维护规则
 

@@ -4,6 +4,7 @@ param(
   [string]$AuthMode = "managed-oauth",
   [string[]]$RepeatCounts = @("1", "2", "3"),
   [int]$DelayMilliseconds = 250,
+  [string]$JsonPath,
   [switch]$ArchiveRuns,
   [string]$ArchiveRoot = "artifacts/captures/event-logging-threshold"
 )
@@ -117,3 +118,11 @@ Write-Host ""
 Write-Host "Sweep summary"
 Write-Host "============="
 $results | Format-Table -AutoSize
+
+if ($JsonPath) {
+  $jsonParent = Split-Path -Parent $JsonPath
+  if ($jsonParent) {
+    New-Item -ItemType Directory -Force -Path $jsonParent | Out-Null
+  }
+  $results | ConvertTo-Json -Depth 5 | Out-File -FilePath $JsonPath -Encoding utf8
+}

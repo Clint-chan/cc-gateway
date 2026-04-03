@@ -47,7 +47,7 @@
 
 ### 2. Transport / Telemetry 事实层
 
-完成度：`89%`
+完成度：`91%`
 
 已完成：
 
@@ -62,9 +62,10 @@
   - gateway 上游稳定看到 `/v1/messages`
   - `external-auth-token` 下 direct side-channel 稳定看到 `/v1/mcp_servers`、`/api/claude_cli/bootstrap`、`/api/claude_code_penguin_mode`、`/mcp-registry`
   - `managed-oauth` 下 direct side-channel 已重新看到 `/api/eval/sdk-*`
-  - `managed-oauth` 的 threshold sweep 已确认：
-    - `RepeatCount=1`、`2` 不稳定
-    - `RepeatCount=3`、`5` 已重新看到 `/api/event_logging/v2/batch`
+- `managed-oauth` 的 threshold sweep 已确认：
+    - `RepeatCount=1` 在 `0 / 250 / 1000ms` 都不会触发
+    - `RepeatCount=2` 已确认为 delay-sensitive 命中区间
+    - `RepeatCount=3` 是当前跨 `0 / 250 / 1000ms` 的稳定下界
 - 已确认 `NO_PROXY=localhost,127.0.0.1` 是双通道 workflow 的硬条件
 - 已确认 `auth mode` 是独立于 `traffic mode` 的第二个高优先级变量
 - 已确认 Grove / account settings 在当前 via-gateway 两种 auth mode 下属于 `auth-model-suppressed`，不是简单的 “not-observed”
@@ -72,14 +73,13 @@
 
 未完成：
 
-- trusted `via-gateway` 对照还没把 `event_logging` 的最小稳定触发条件完全收干净
 - `/api/eval/*` 在 gateway 场景下已经重新确认为 direct side-channel，但相关字段矩阵还没完全冻结
-- `event_logging` 在 trusted workflow 下的时序和 probe 阈值还没彻底验掉
-- `remote-control` 的命令前置 gating 已拆清，但 bridge feature gate 本身仍然没有放量
+- `event_logging` 在 trusted workflow 下的 probe-type 维度还没彻底验掉
+- bridge feature gate 本身仍然没有放量，所以 `remote-control` 仍不适合作为正向能力验证面
 
 ### 3. 方法论与可维护性
 
-完成度：`96%`
+完成度：`97%`
 
 已完成：
 
@@ -91,6 +91,7 @@
 - 有 trusted `via-gateway` 双通道 workflow
 - 有 auth-mode-sensitive 控制面矩阵文档和结构化目标清单
 - 有 event_logging 阈值扫面脚本和专项 workflow
+- 有 `RepeatCount x DelayMilliseconds` 的矩阵 sweep 工作流和结构化结果
 - 有半自动化路线图
 - 有仓库布局规范
 - 有 URL 过滤提取和双通道 capture 脚本
@@ -210,7 +211,7 @@
 
 ## 还差哪些任务
 
-按优先级看，还差四块：
+按优先级看，还差三块：
 
 ### T1. trusted via-gateway 对照
 
@@ -227,30 +228,23 @@
 - 主链与一部分 direct side channel 已拆开
 - `/api/eval/*` 已确认会受 auth mode 直接影响
 - auth-mode-sensitive 控制面矩阵已经单独冻结成资产
-- `event_logging` 的最小稳定触发条件已经从“猜 2 次”收敛到“当前已验证下界是 3 次”
+- `event_logging` 的最小稳定触发条件已经从“猜 2 次”收敛到：
+  - `RepeatCount=2` 属于 delay-sensitive 命中区间
+  - `RepeatCount=3` 是跨 `0 / 250 / 1000ms` 的稳定下界
 - 当前剩余重点只剩：
-  - `/api/event_logging/*` 的更小 delay / 更少 probe 是否还能稳定命中
-  - auth-mode-sensitive 控制面矩阵继续补全未观察到的行
+  - `/api/event_logging/*` 的 probe-type 维度
+  - `/api/eval/*` 的字段矩阵继续冻结
 
-### T2. event logging 的 trusted 时序复抓
+### T2. event logging 的 probe-type 复抓
 
 目标：
 
-- 弄清在 trusted workflow 下，`event_logging` 为什么这次没有同步出现
+- 把 `event_logging` 从“次数/间隔矩阵”继续推进到“probe 类型矩阵”
 - 判断是：
-  - 进程时序
-  - mode gating
-  - probe 差异
-  - 还是 CLI 版本行为变化
+  - `hello` probe 的局部特性
+  - 还是更普遍的 headless 行为
 
-### T3. remote-control 早退路径拆清
-
-目标：
-
-- 解释为什么 `remote-control` 会提前结束
-- 把这条 probe 从主流程中降级或重新定位
-
-### T4. Docker 验证回补
+### T3. Docker 验证回补
 
 目标：
 

@@ -84,6 +84,37 @@
   - 当前脚本里的 bridge gate 仍以本地缓存为近似判断；最终结论仍以真实命令输出为准
   - 如果 upstream 调整 bridge gating 顺序，这份结论需要重跑
 
+### A-000b Event Logging 阈值矩阵冻结
+
+- 日期：2026-04-03
+- 证据：
+  - [event-logging-threshold-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-threshold-workflow.md)
+  - [event_logging_matrix_2026-04-03.json](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/event_logging_matrix_2026-04-03.json)
+  - [firstPartyEventLogger.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/firstPartyEventLogger.ts)
+  - [firstPartyEventLoggingExporter.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/firstPartyEventLoggingExporter.ts)
+- 当前差异：
+  - 之前我们只能冻结一维结论：
+    - `RepeatCount=3` 在 `DelayMilliseconds=250` 下能复现
+  - 但这还无法解释：
+    - `RepeatCount=2` 为什么有时命中、有时 miss
+    - 到底是次数问题，还是 delay 问题
+- 处理动作：
+  - 新增：
+    - [sweep-event-logging-matrix.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-matrix.ps1)
+  - 为阈值脚本补了结构化输出：
+    - [sweep-event-logging-threshold.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-threshold.ps1)
+  - 实跑了 `RepeatCount={1,2,3}`、`DelayMilliseconds={0,250,1000}` 的二维矩阵
+- 回归验证：
+  - `RepeatCount=1`
+    在 `0 / 250 / 1000ms` 上都未触发 `event_logging`
+  - `RepeatCount=2`
+    在 `0ms`、`1000ms` 命中，在 `250ms` miss
+  - `RepeatCount=3`
+    在 `0 / 250 / 1000ms` 上都稳定触发，而且仍然只出现在 direct side-channel
+- 剩余风险：
+  - 当前结论只冻结了 `hello` probe，不代表所有 probe 类型都等价
+  - `EventDirectCount` 的绝对数量还会受 exporter batching/shutdown flush 影响，所以后续更适合把“是否出现”和“owner”当成主判断，而不是只看批次数
+
 ### A-001 显式代理链路
 
 - 日期：2026-04-03

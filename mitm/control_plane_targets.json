@@ -18,7 +18,7 @@
     "surface": "/api/event_logging/v2/batch",
     "pattern": "/api/event_logging/",
     "expected_owner": "direct-host-side-channel",
-    "notes": "1P event logging; timing-sensitive in managed-oauth."
+    "notes": "1P event logging; direct side-channel with timing-sensitive trigger threshold in managed-oauth."
   },
   {
     "key": "bootstrap",
@@ -31,15 +31,15 @@
     "key": "account_settings",
     "surface": "/api/oauth/account/settings",
     "pattern": "oauth/account/settings",
-    "expected_owner": "direct-host-side-channel",
-    "notes": "OAuth account settings lookups."
+    "expected_owner": "gated-surface",
+    "notes": "OAuth account settings lookups; currently auth-model-suppressed in via-gateway auth modes."
   },
   {
     "key": "grove",
     "surface": "/api/claude_code_grove",
     "pattern": "claude_code_grove",
-    "expected_owner": "direct-host-side-channel",
-    "notes": "Grove entitlement/config control plane."
+    "expected_owner": "gated-surface",
+    "notes": "Grove entitlement/config control plane; currently auth-model-suppressed in via-gateway auth modes."
   },
   {
     "key": "penguin_mode",

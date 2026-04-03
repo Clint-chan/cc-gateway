@@ -68,13 +68,14 @@
 | RepeatCount | managed-oauth direct event_logging | managed-oauth gateway event_logging | 当前结论 |
 | --- | --- | --- | --- |
 | `1` | 否 | 否 | 单次最小 probe 不足以稳定触发 |
-| `2` | 否 | 否 | 当前机器和延迟下仍不稳定，不能冻结成阈值 |
-| `3` | 是 | 否 | 当前已验证的可复现下界 |
+| `2` | 否/是 | 否 | 当前已确认是 delay-sensitive 命中区间，不能冻结成稳定阈值 |
+| `3` | 是 | 否 | 当前已验证的跨多组 delay 的稳定下界 |
 | `5` | 是 | 否 | 继续稳定出现，仍为 direct side-channel |
 
 备注：
 
-- `RepeatCount=2` 过去曾有一次命中记录，但最新 sweep 已证明它不是稳定阈值
+- `RepeatCount=2` 在 `DelayMilliseconds=0` 和 `1000` 时都能命中，但在 `250` 时 miss
+- 所以它现在不应再被写成“偶发一次”，而应明确记成 `delay-sensitive`
 - `event_logging` 的专项阈值方法统一看 [event-logging-threshold-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-threshold-workflow.md)
 
 ### Grove 说明

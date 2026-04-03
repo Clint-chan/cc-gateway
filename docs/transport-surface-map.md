@@ -116,10 +116,13 @@
   在 `alignment mode + custom base URL + headless` 的当前最小请求里，这一路仍然会发，而且会绕过 gateway，直接暴露真实本机环境
 - 当前 via-gateway 补充结论：
   在 trusted workspace + custom base URL 的双通道最小请求里：
-  - `managed-oauth + RepeatCount=2` 已重新看到 `/api/event_logging/v2/batch`
+  - `managed-oauth + RepeatCount=2` 目前已确认属于 delay-sensitive 命中区间
+  - `managed-oauth + RepeatCount=3` 是当前跨 `0 / 250 / 1000ms` 都成立的稳定下界
   - 仍然是 direct side-channel，不经过 gateway 上游
 - 备注：
   说明它至少还受 mode 和 probe 时序影响；不能因为单轮缺失就把它从风险面移除
+  详细阈值矩阵看：
+  - [event-logging-threshold-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-threshold-workflow.md)
 
 #### 2.3 metrics opt-out
 

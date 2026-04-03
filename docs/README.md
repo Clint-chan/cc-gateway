@@ -43,7 +43,7 @@ The goal is to keep product direction, data model, API shape, and operational st
   Frozen matrix for auth-mode-sensitive control-plane behavior in the trusted via-gateway workflow.
 
 - [event-logging-threshold-workflow.md](./event-logging-threshold-workflow.md)
-  Repeatable workflow for measuring the minimum trigger threshold of 1P event logging.
+  Repeatable workflow for measuring the minimum trigger threshold of 1P event logging, including the current repeat-count x delay matrix.
 
 - [grove-control-plane-gating.md](./grove-control-plane-gating.md)
   Frozen explanation for why Grove control-plane surfaces disappear under current via-gateway auth models, and how to distinguish auth suppression from capture failure.
