@@ -30,6 +30,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [operations.md](./operations.md)
   Local Docker deployment, credential preparation, startup validation, and operational notes.
 
+- [research-environment-policy.md](./research-environment-policy.md)
+  Frozen rule for when to use local npm versus Docker in transport and telemetry work.
+
 - [auth-proxy-debugging.md](./auth-proxy-debugging.md)
   Detailed record of the Windows auth/proxy debugging path, MITM evidence, final working client setup, and Docker follow-up notes.
 
@@ -96,9 +99,10 @@ When the project evolves, update docs in this order:
 As of now:
 
 - the repository is still a backend-only gateway
-- local Docker deployment files exist
+- the runtime now uses `.env + config.yaml`
+- local npm is the canonical telemetry research baseline
+- Docker is the deployment-validation runtime
 - admin UI and control plane APIs are still planning-stage work
-- the current runtime still depends on a single `config.yaml`
 
 This means the docs describe both:
 

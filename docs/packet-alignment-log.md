@@ -818,10 +818,40 @@
     - 更小 delay 下是否仍然 `3` 次即可
     - 是否存在不同 session 生命周期导致的波动
 
+### A-025 研究环境策略与维护报告入口已经冻结
+
+- 日期：2026-04-04
+- 证据：
+  - [research-environment-policy.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/research-environment-policy.md)
+  - [render_telemetry_report.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/render_telemetry_report.py)
+  - [telemetry-automation-plan.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/telemetry-automation-plan.md)
+- 当前差异：
+  - 虽然 `.env + config.yaml` 和 Docker 部署已经打通，但如果后续把 Docker 直接当作主抓包环境，会重新引入：
+    - Docker Desktop 代理链
+    - container NAT
+    - host alias 翻译
+    - port publish 噪音
+  - 这些都会干扰“到底是 upstream 变了，还是容器层引入了新变量”的判断
+- 处理动作：
+  - 单独新增 [research-environment-policy.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/research-environment-policy.md)
+  - 明确冻结：
+    - 本地 `npm start` 是 transport / telemetry 研究基线
+    - Docker Compose 是部署验证环境，不是默认逆向基线
+  - 新增 [render_telemetry_report.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/render_telemetry_report.py)，把：
+    - control-plane ownership
+    - eval field relations
+    - event_logging threshold / probe sensitivity
+    汇总成一份 markdown 维护报告
+- 回归验证：
+  - `python -m py_compile mitm\\render_telemetry_report.py`
+  - `python mitm\\render_telemetry_report.py --output artifacts/reports/telemetry-smoke.md`
+- 剩余风险：
+  - 当前报告生成器仍然依赖现有 capture 命名约定
+  - 后续如果要接入定时任务，还需要补“新 capture -> 固定命名 -> 自动报告”的外层调度脚本
+
 ## 下一步优先级
 
-1. 专项触发 `/api/eval/*`，验证它到底是 headless 退出问题还是场景问题
-2. 用 transport ownership 地图继续细分 `BASE_API_URL` 控制面
-3. 评估有没有办法把 direct-host side channel 也纳入统一出口或显式压制
-4. 根据抓包差异继续补头部、body 和控制面请求
-5. 评估 persona 分组策略，而不是把所有账号都压成同一个静态模板
+1. 把维护报告生成器接到更完整的 capture 调度流
+2. 开始做“新版本升级后的一键复抓 + 生成报告”外层脚本
+3. 继续把 persona / fingerprint 策略从静态样例推进到可热更新资产
+4. 在不破坏当前 transport baseline 的前提下，再进入后续 control-plane 与平台化工作

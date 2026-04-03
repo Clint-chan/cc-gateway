@@ -21,6 +21,7 @@
 - `mitm/gateway-YYYYMMDD.flows`
 - `mitm/gateway-YYYYMMDD.log`
 - `mitm/diff-YYYYMMDD.md`
+- `artifacts/reports/telemetry-YYYYMMDD.md`
 
 ## 自动化链路
 
@@ -50,6 +51,14 @@
 - 必须使用 `alignment mode`
 - 不要设置 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`
 - 否则 `GrowthBook` 和 `1P event logging` 根本不会发
+
+默认研究环境规则：
+
+- 优先使用本地 `npm start`
+- Docker 只用于部署验证，不作为默认抓包基线
+- 只有在明确研究容器层 transport 差异时，才把 Docker 纳入 primary diff
+
+原因见 [research-environment-policy.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/research-environment-policy.md)。
 
 如果目标是做 trusted `via-gateway` 双通道：
 
@@ -104,6 +113,7 @@
 - [probe-growthbook-eval-direct.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-growthbook-eval-direct.ps1)
 - [extract_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/extract_signals.py)
 - [diff_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/diff_signals.py)
+- [render_telemetry_report.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/render_telemetry_report.py)
 
 其中：
 
@@ -112,6 +122,12 @@
   - `/api/eval/`
   - `/v1/messages`
   - `/api/event_logging/`
+
+当前最小维护报告命令：
+
+```powershell
+python mitm/render_telemetry_report.py --output artifacts/reports/telemetry-YYYYMMDD.md
+```
 
 ## 自动任务触发条件
 

@@ -63,6 +63,7 @@
   - `docker-compose.yml`
   - `.gitignore`
 - 运行配置样例
+  - `.env.example`
   - `config.example.yaml`
   - `.claude.json.example`
   - `.claude.alignment.json.example`
