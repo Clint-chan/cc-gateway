@@ -16,6 +16,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [repository-layout.md](./repository-layout.md)
   Repository structure rules for runtime code, tests, capture assets, logs, and the later gateway/admin-api/admin-web split.
 
+- [status-and-exit-criteria.md](./status-and-exit-criteria.md)
+  Current phase assessment, v1 exit criteria for transport/telemetry work, and an estimated timeline to close this layer.
+
 - [data-model.md](./data-model.md)
   Core entities for accounts, fingerprints, proxies, clients, policies, sessions, and audit records.
 
