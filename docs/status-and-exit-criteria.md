@@ -47,7 +47,7 @@
 
 ### 2. Transport / Telemetry 事实层
 
-完成度：`91%`
+完成度：`93%`
 
 已完成：
 
@@ -66,6 +66,10 @@
     - `RepeatCount=1` 在 `0 / 250 / 1000ms` 都不会触发
     - `RepeatCount=2` 已确认为 delay-sensitive 命中区间
     - `RepeatCount=3` 是当前跨 `0 / 250 / 1000ms` 的稳定下界
+- `managed-oauth` 的 probe matrix 已确认：
+    - `hello` 在 `DelayMilliseconds=250` 下，`RepeatCount=2` 仍 miss
+    - `hello-json-verbose` 在同样条件下已能命中
+    - `hello-stream-json-verbose` 已能把阈值压到 `RepeatCount=1`
 - 已确认 `NO_PROXY=localhost,127.0.0.1` 是双通道 workflow 的硬条件
 - 已确认 `auth mode` 是独立于 `traffic mode` 的第二个高优先级变量
 - 已确认 Grove / account settings 在当前 via-gateway 两种 auth mode 下属于 `auth-model-suppressed`，不是简单的 “not-observed”
@@ -74,12 +78,12 @@
 未完成：
 
 - `/api/eval/*` 在 gateway 场景下已经重新确认为 direct side-channel，但相关字段矩阵还没完全冻结
-- `event_logging` 在 trusted workflow 下的 probe-type 维度还没彻底验掉
 - bridge feature gate 本身仍然没有放量，所以 `remote-control` 仍不适合作为正向能力验证面
+- `event_logging` 的 current findings 已足够冻结到 `repeat / delay / probe-type` 三轴；更深的 interactive / resume 类 probe 暂不影响当前 v1 收尾
 
 ### 3. 方法论与可维护性
 
-完成度：`97%`
+完成度：`98%`
 
 已完成：
 
@@ -92,6 +96,7 @@
 - 有 auth-mode-sensitive 控制面矩阵文档和结构化目标清单
 - 有 event_logging 阈值扫面脚本和专项 workflow
 - 有 `RepeatCount x DelayMilliseconds` 的矩阵 sweep 工作流和结构化结果
+- 有 `probe-type` 矩阵工作流和结构化结果
 - 有半自动化路线图
 - 有仓库布局规范
 - 有 URL 过滤提取和双通道 capture 脚本
@@ -211,7 +216,7 @@
 
 ## 还差哪些任务
 
-按优先级看，还差三块：
+按优先级看，还差两块：
 
 ### T1. trusted via-gateway 对照
 
@@ -231,20 +236,15 @@
 - `event_logging` 的最小稳定触发条件已经从“猜 2 次”收敛到：
   - `RepeatCount=2` 属于 delay-sensitive 命中区间
   - `RepeatCount=3` 是跨 `0 / 250 / 1000ms` 的稳定下界
+- `event_logging` 的 probe-type 维度也已经冻结：
+  - `hello`
+  - `hello-json-verbose`
+  - `hello-stream-json-verbose`
 - 当前剩余重点只剩：
-  - `/api/event_logging/*` 的 probe-type 维度
   - `/api/eval/*` 的字段矩阵继续冻结
+  - Docker 场景回补验证
 
-### T2. event logging 的 probe-type 复抓
-
-目标：
-
-- 把 `event_logging` 从“次数/间隔矩阵”继续推进到“probe 类型矩阵”
-- 判断是：
-  - `hello` probe 的局部特性
-  - 还是更普遍的 headless 行为
-
-### T3. Docker 验证回补
+### T2. Docker 验证回补
 
 目标：
 

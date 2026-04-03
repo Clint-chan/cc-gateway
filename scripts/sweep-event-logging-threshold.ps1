@@ -4,6 +4,8 @@ param(
   [string]$AuthMode = "managed-oauth",
   [string[]]$RepeatCounts = @("1", "2", "3"),
   [int]$DelayMilliseconds = 250,
+  [ValidateSet("hello", "hello-json-verbose", "hello-stream-json-verbose")]
+  [string]$Probe = "hello",
   [string]$JsonPath,
   [switch]$ArchiveRuns,
   [string]$ArchiveRoot = "artifacts/captures/event-logging-threshold"
@@ -63,6 +65,7 @@ foreach ($repeatCount in $repeatCountList) {
   Write-Host "auth_mode: $AuthMode"
   Write-Host "repeat_count: $repeatCount"
   Write-Host "delay_ms: $DelayMilliseconds"
+  Write-Host "probe: $Probe"
   Write-Host ""
 
   & $captureScript -AuthMode $AuthMode | Out-Host
@@ -70,6 +73,7 @@ foreach ($repeatCount in $repeatCountList) {
     -WorkspacePath $WorkspacePath `
     -EnableDirectMitm `
     -AuthMode $AuthMode `
+    -Probe $Probe `
     -RepeatCount $repeatCount `
     -DelayMilliseconds $DelayMilliseconds | Out-Host
   & $finalizeScript -StopGateway | Out-Host
@@ -83,6 +87,7 @@ foreach ($repeatCount in $repeatCountList) {
 
   $results += [pscustomobject]@{
     AuthMode             = $AuthMode
+    Probe                = $Probe
     RepeatCount          = $repeatCount
     DelayMilliseconds    = $DelayMilliseconds
     EventDirectCount     = $eventRow.direct_count

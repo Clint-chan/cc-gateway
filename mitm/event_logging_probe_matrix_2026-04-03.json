@@ -1,0 +1,80 @@
+[
+  {
+    "AuthMode": "managed-oauth",
+    "Probe": "hello",
+    "DelayMilliseconds": 250,
+    "RepeatCount": 1,
+    "EventDirectCount": 0,
+    "EventGatewayCount": 0,
+    "EventOwner": "not-observed",
+    "EvalDirectCount": 2,
+    "EvalGatewayCount": 0,
+    "EvalOwner": "direct-host-side-channel",
+    "MessagesGatewayCount": 2
+  },
+  {
+    "AuthMode": "managed-oauth",
+    "Probe": "hello",
+    "DelayMilliseconds": 250,
+    "RepeatCount": 2,
+    "EventDirectCount": 0,
+    "EventGatewayCount": 0,
+    "EventOwner": "not-observed",
+    "EvalDirectCount": 4,
+    "EvalGatewayCount": 0,
+    "EvalOwner": "direct-host-side-channel",
+    "MessagesGatewayCount": 4
+  },
+  {
+    "AuthMode": "managed-oauth",
+    "Probe": "hello-json-verbose",
+    "DelayMilliseconds": 250,
+    "RepeatCount": 1,
+    "EventDirectCount": 0,
+    "EventGatewayCount": 0,
+    "EventOwner": "not-observed",
+    "EvalDirectCount": 2,
+    "EvalGatewayCount": 0,
+    "EvalOwner": "direct-host-side-channel",
+    "MessagesGatewayCount": 2
+  },
+  {
+    "AuthMode": "managed-oauth",
+    "Probe": "hello-json-verbose",
+    "DelayMilliseconds": 250,
+    "RepeatCount": 2,
+    "EventDirectCount": 2,
+    "EventGatewayCount": 0,
+    "EventOwner": "direct-host-side-channel",
+    "EvalDirectCount": 4,
+    "EvalGatewayCount": 0,
+    "EvalOwner": "direct-host-side-channel",
+    "MessagesGatewayCount": 4
+  },
+  {
+    "AuthMode": "managed-oauth",
+    "Probe": "hello-stream-json-verbose",
+    "DelayMilliseconds": 250,
+    "RepeatCount": 1,
+    "EventDirectCount": 3,
+    "EventGatewayCount": 0,
+    "EventOwner": "direct-host-side-channel",
+    "EvalDirectCount": 2,
+    "EvalGatewayCount": 0,
+    "EvalOwner": "direct-host-side-channel",
+    "MessagesGatewayCount": 2
+  },
+  {
+    "AuthMode": "managed-oauth",
+    "Probe": "hello-stream-json-verbose",
+    "DelayMilliseconds": 250,
+    "RepeatCount": 2,
+    "EventDirectCount": 2,
+    "EventGatewayCount": 0,
+    "EventOwner": "direct-host-side-channel",
+    "EvalDirectCount": 4,
+    "EvalGatewayCount": 0,
+    "EvalOwner": "direct-host-side-channel",
+    "MessagesGatewayCount": 4
+  }
+]

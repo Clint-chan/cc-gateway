@@ -45,6 +45,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [event-logging-threshold-workflow.md](./event-logging-threshold-workflow.md)
   Repeatable workflow for measuring the minimum trigger threshold of 1P event logging, including the current repeat-count x delay matrix.
 
+- [event-logging-probe-workflow.md](./event-logging-probe-workflow.md)
+  Dedicated workflow for comparing how different headless `--print` probe types change the 1P event_logging trigger threshold.
+
 - [grove-control-plane-gating.md](./grove-control-plane-gating.md)
   Frozen explanation for why Grove control-plane surfaces disappear under current via-gateway auth models, and how to distinguish auth suppression from capture failure.
 

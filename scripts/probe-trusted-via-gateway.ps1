@@ -9,7 +9,7 @@ param(
   [int]$DirectMitmPort = 18081,
   [int]$RepeatCount = 1,
   [int]$DelayMilliseconds = 250,
-  [ValidateSet("hello")]
+  [ValidateSet("hello", "hello-json-verbose", "hello-stream-json-verbose")]
   [string]$Probe = "hello"
 )
 
@@ -61,6 +61,7 @@ try {
   Write-Host "gateway_url: $GatewayUrl"
   Write-Host "auth_mode: $AuthMode"
   Write-Host "repeat_count: $RepeatCount"
+  Write-Host "probe: $Probe"
   Write-Host "direct_mitm_enabled: $EnableDirectMitm"
   if ($EnableDirectMitm) {
     Write-Host "direct_mitm_port: $DirectMitmPort"
@@ -76,6 +77,12 @@ try {
     switch ($Probe) {
       "hello" {
         & claude -p "hello"
+      }
+      "hello-json-verbose" {
+        & claude -p --output-format json --verbose "hello"
+      }
+      "hello-stream-json-verbose" {
+        & claude -p --output-format stream-json --verbose "hello"
       }
     }
 

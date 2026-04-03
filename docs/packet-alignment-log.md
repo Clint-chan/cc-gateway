@@ -115,6 +115,38 @@
   - 当前结论只冻结了 `hello` probe，不代表所有 probe 类型都等价
   - `EventDirectCount` 的绝对数量还会受 exporter batching/shutdown flush 影响，所以后续更适合把“是否出现”和“owner”当成主判断，而不是只看批次数
 
+### A-000c Event Logging probe-type 矩阵冻结
+
+- 日期：2026-04-03
+- 证据：
+  - [event-logging-probe-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-probe-workflow.md)
+  - [event_logging_probe_matrix_2026-04-03.json](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/event_logging_probe_matrix_2026-04-03.json)
+  - [print.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/cli/print.ts)
+  - [gracefulShutdown.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/gracefulShutdown.ts)
+- 当前差异：
+  - 之前我们已经知道 `event_logging` 对 `repeat / delay` 敏感
+  - 但还不知道同一条 `--print` 主链下，不同输出路径会不会继续改变阈值
+- 处理动作：
+  - 扩展：
+    - [probe-trusted-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-trusted-via-gateway.ps1)
+    - [sweep-event-logging-threshold.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-threshold.ps1)
+  - 新增：
+    - [sweep-event-logging-probe-matrix.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-probe-matrix.ps1)
+  - 固定 `managed-oauth + DelayMilliseconds=250 + RepeatCount={1,2}`，对比：
+    - `hello`
+    - `hello-json-verbose`
+    - `hello-stream-json-verbose`
+- 回归验证：
+  - `hello`
+    在 `RepeatCount=1,2` 下都没有触发 `event_logging`
+  - `hello-json-verbose`
+    在 `RepeatCount=2` 时已触发 `event_logging`
+  - `hello-stream-json-verbose`
+    在 `RepeatCount=1` 时就已触发 `event_logging`
+- 剩余风险：
+  - 当前 probe matrix 只冻结了 `--print` 路径，不代表 interactive 或 resume/continue 路径一定等价
+  - 这条结论更适合指导“如何复抓和快速定位”，不应直接外推成生产配置建议
+
 ### A-001 显式代理链路
 
 - 日期：2026-04-03

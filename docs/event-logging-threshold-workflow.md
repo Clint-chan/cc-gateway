@@ -262,6 +262,10 @@ artifacts/captures/event-logging-matrix/
 - workspace 初始状态
 - 更长的 post-run 等待
 
+如果已经锁住 repeat/delay，但不同抓法还是表现不一致，下一步统一转到：
+
+- [event-logging-probe-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-probe-workflow.md)
+
 ## 维护规则
 
 每次用这个工作流得出新阈值结论，按这个顺序更新：

@@ -43,6 +43,7 @@
 - [clear-grove-cache.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/clear-grove-cache.ps1)
 - [sweep-event-logging-threshold.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-threshold.ps1)
 - [sweep-event-logging-matrix.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-matrix.ps1)
+- [sweep-event-logging-probe-matrix.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-probe-matrix.ps1)
 - [prepare-trusted-capture-workspace.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/prepare-trusted-capture-workspace.ps1)
 - [probe-growthbook-eval-direct.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-growthbook-eval-direct.ps1)
 - [extract_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/extract_signals.py)
@@ -334,8 +335,16 @@
     已确认属于 `delay-sensitive` 命中区间
   - `RepeatCount=3`
     是当前跨三组 delay 的稳定下界
+- 当前 probe-type 结论：
+  - `hello`
+    在 `DelayMilliseconds=250` 下，`RepeatCount=2` 仍 miss
+  - `hello-json-verbose`
+    在 `DelayMilliseconds=250` 下，`RepeatCount=2` 已命中
+  - `hello-stream-json-verbose`
+    在 `DelayMilliseconds=250` 下，`RepeatCount=1` 就能命中
 - 推荐研究入口：
   - [event-logging-threshold-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-threshold-workflow.md)
+  - [event-logging-probe-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-probe-workflow.md)
 - 当前未完全验证：
   当前 headless 最小请求已经确认这一路会发，但在 gateway 场景下它仍然走 direct-host side channel，而不是经过 gateway
 - 最新实抓：
@@ -347,6 +356,8 @@
   - `RepeatCount=1` 在当前测试的 `0 / 250 / 1000ms` 上都不触发
   - `RepeatCount=2` 不是简单“不稳定”，而是明确 `delay-sensitive`
   - `RepeatCount=3` 是当前跨三组 delay 的稳定下界
+  - 进一步的 probe matrix 也已确认：
+    - `hello-stream-json-verbose` 会把阈值继续压低到 `RepeatCount=1`
 - 模式注意：
   `quiet mode` 下 1P event logging 会被 privacy level 直接关闭
 
