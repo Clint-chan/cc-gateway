@@ -1,39 +1,29 @@
 # CC Gateway Configuration
-# Copy to config.yaml and modify
+# Copy to config.yaml and pair it with a local .env file.
+# .env should hold deployment-specific values and secrets.
+# config.yaml should keep the structured gateway and fingerprint persona.
 
 server:
-  port: 8443
-  # TLS cert/key paths (required for HTTPS)
-  # Generate self-signed: openssl req -x509 -newkey rsa:2048 -keyout certs/key.pem -out certs/cert.pem -days 365 -nodes
+  port: ${GATEWAY_SERVER_PORT:-8443}
   tls:
-    cert: ./certs/cert.pem
-    key: ./certs/key.pem
+    cert: "${GATEWAY_TLS_CERT:-./certs/cert.pem}"
+    key: "${GATEWAY_TLS_KEY:-./certs/key.pem}"
 
-# Upstream Anthropic API
 upstream:
-  url: https://api.anthropic.com
+  url: "${GATEWAY_UPSTREAM_URL:-https://api.anthropic.com}"
 
-# Optional explicit proxy for upstream API and OAuth refresh.
-# If omitted, gateway falls back to HTTPS_PROXY / HTTP_PROXY / ALL_PROXY.
-# For Docker/Compose on Docker Desktop, prefer host.docker.internal instead of
-# 127.0.0.1 because container loopback is not the Windows host loopback.
-# The provided docker-compose.yml already adds:
-#   host.docker.internal:host-gateway
+# Use a proxy endpoint that is reachable from the current runtime.
+# For one .env shared by local npm and Docker on the same Windows host,
+# prefer a host LAN IP or another shared proxy host over 127.0.0.1.
 network:
-  proxy_url: http://127.0.0.1:10808
+  proxy_url: ${GATEWAY_PROXY_URL:-null}
 
-# OAuth - gateway manages token lifecycle centrally
-# Step 1: On admin machine, run `claude` and do browser OAuth login
-# Step 2: Copy refresh_token from one of these locations:
-#   macOS Keychain: security find-generic-password -s "~/.claude-credentials" -w | jq -r '.claudeAiOauth.refreshToken'
-#   Fallback file:  cat ~/.claude/.credentials.json | jq -r '.claudeAiOauth.refreshToken'
-# Step 3: Paste it here. Gateway auto-refreshes the access token.
 oauth:
-  refresh_token: "your-refresh-token-here"
+  access_token: ${GATEWAY_OAUTH_ACCESS_TOKEN:-null}
+  refresh_token: "${GATEWAY_OAUTH_REFRESH_TOKEN}"
+  expires_at: ${GATEWAY_OAUTH_EXPIRES_AT:-null}
 
 # Canonical client persona.
-# Use this when you want multiple machines to present a single first-party
-# client story instead of leaking mixed interactive/non-interactive modes.
 client:
   user_agent: "claude-cli/2.1.91 (external, sdk-cli)"
   entrypoint: sdk-cli
@@ -42,23 +32,17 @@ client:
     - oauth-2025-04-20
     - advanced-tool-use-2025-11-20
 
-# Authentication - each client gets a bearer token
-# Generate tokens: npm run generate-token
 auth:
   tokens:
-    - name: machine-a
-      token: change-me-token-1
-    - name: machine-b
-      token: change-me-token-2
+    - name: "${GATEWAY_CLIENT_PRIMARY_NAME:-local-dev}"
+      token: "${GATEWAY_CLIENT_PRIMARY_TOKEN}"
 
-# Canonical identity - all clients will appear as this single device
-# Generate a fresh identity: npm run generate-identity
 identity:
-  device_id: "0000000000000000000000000000000000000000000000000000000000000000"
-  email: "user@example.com"
+  device_id: "${GATEWAY_IDENTITY_DEVICE_ID}"
+  email: "${GATEWAY_IDENTITY_EMAIL}"
 
-# Canonical environment fingerprint
-# Should match a real machine's profile to look natural
+# Canonical environment fingerprint.
+# Keep the structured persona here instead of flattening it into .env.
 env:
   platform: darwin
   platform_raw: darwin
@@ -86,28 +70,23 @@ env:
   # linux_distro_version: "24.04"
   # linux_kernel: 6.8.0-57-generic
 
-# System prompt environment masking
-# These values replace the <env> block in the system prompt text.
-# MUST be consistent with the env section above!
 prompt_env:
-  platform: darwin                    # Must match env.platform
-  shell: zsh                          # Shell name shown in prompt
-  os_version: "Darwin 24.4.0"        # uname -sr output
-  working_dir: /Users/jack/projects   # Canonical home directory path prefix
+  platform: darwin
+  shell: zsh
+  os_version: "Darwin 24.4.0"
+  working_dir: /Users/jack/projects
 
-# Canonical process metrics (should look like a real machine)
 process:
-  constrained_memory: 34359738368  # 32GB - pick a realistic value
-  rss_range: [300000000, 500000000]  # 300-500MB realistic range
+  constrained_memory: 34359738368
+  rss_range: [300000000, 500000000]
   heap_total_range: [40000000, 80000000]
   heap_used_range: [100000000, 200000000]
   external_range: [3000000, 12000000]
   array_buffers_range: [200000, 2000000]
   cpu_percent_range: [0, 35]
 
-# Logging
 logging:
-  level: info  # debug | info | warn | error
-  audit: true  # log which client made each request
-  file: ./runtime/logs/gateway.log
-  audit_file: ./runtime/logs/audit.log
+  level: ${GATEWAY_LOG_LEVEL:-info}
+  audit: ${GATEWAY_LOG_AUDIT:-true}
+  file: "${GATEWAY_LOG_FILE:-./runtime/logs/gateway.log}"
+  audit_file: "${GATEWAY_AUDIT_LOG_FILE:-./runtime/logs/audit.log}"

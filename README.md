@@ -63,8 +63,10 @@ npm run generate-identity
 npm run generate-token my-machine
 
 # Configure
+cp .env.example .env
 cp config.example.yaml config.yaml
-# Edit config.yaml: paste device_id, client token, and OAuth refresh_token
+# Edit .env: paste device_id, client token, OAuth refresh token, and deployment values
+# Edit config.yaml only when you want to change the structured fingerprint persona
 ```
 
 ### 2. Extract OAuth token (on a machine that has logged into Claude Code)
@@ -86,6 +88,13 @@ npm run build && npm start
 # Docker
 docker-compose up -d
 ```
+
+`config.yaml` remains the structured runtime config.
+`.env` is now the shared deployment/secret layer for:
+
+- local `npm start`
+- Docker Compose
+- future `admin-api` / `admin-web` services
 
 ### 4. Verify
 
@@ -144,6 +153,8 @@ Example:
   "hasCompletedOnboarding": true
 }
 ```
+
+The repository also ships a deployment-facing [.env.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.env.example) for the gateway runtime.
 
 Reference file:
 

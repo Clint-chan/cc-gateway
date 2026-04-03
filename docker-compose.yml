@@ -1,8 +1,10 @@
 services:
   gateway:
     build: .
+    env_file:
+      - .env
     ports:
-      - "8443:8443"
+      - "${GATEWAY_PUBLIC_PORT:-8443}:${GATEWAY_SERVER_PORT:-8443}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

@@ -1,6 +1,6 @@
-import { readFileSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import { parse } from 'yaml'
-import { resolve } from 'path'
+import { dirname, resolve } from 'path'
 
 export type TokenEntry = {
   name: string
@@ -64,10 +64,113 @@ export type Config = {
   }
 }
 
+const ENV_PLACEHOLDER_RE = /\$\{([A-Z0-9_]+)(?::-(.*?))?\}/g
+
+function stripInlineComment(value: string): string {
+  let inSingle = false
+  let inDouble = false
+
+  for (let idx = 0; idx < value.length; idx++) {
+    const current = value[idx]
+    const prev = idx > 0 ? value[idx - 1] : ''
+
+    if (current === "'" && !inDouble) {
+      inSingle = !inSingle
+      continue
+    }
+    if (current === '"' && !inSingle && prev !== '\\') {
+      inDouble = !inDouble
+      continue
+    }
+    if (current === '#' && !inSingle && !inDouble) {
+      const before = idx === 0 ? '' : value[idx - 1]
+      if (before === '' || /\s/.test(before)) {
+        return value.slice(0, idx).trimEnd()
+      }
+    }
+  }
+
+  return value.trim()
+}
+
+function decodeEnvValue(rawValue: string): string {
+  const value = stripInlineComment(rawValue.trim())
+  if (value.length === 0) return ''
+
+  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    const quote = value[0]
+    const inner = value.slice(1, -1)
+    if (quote === "'") return inner
+    return inner
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t')
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\')
+  }
+
+  return value
+}
+
+function loadDotEnv(envPath: string): void {
+  if (!existsSync(envPath)) return
+
+  const raw = readFileSync(envPath, 'utf-8')
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+
+    const normalized = trimmed.startsWith('export ') ? trimmed.slice(7).trim() : trimmed
+    const equalsIndex = normalized.indexOf('=')
+    if (equalsIndex <= 0) continue
+
+    const key = normalized.slice(0, equalsIndex).trim()
+    if (!/^[A-Z_][A-Z0-9_]*$/i.test(key)) continue
+    if (process.env[key] !== undefined) continue
+
+    const rawValue = normalized.slice(equalsIndex + 1)
+    process.env[key] = decodeEnvValue(rawValue)
+  }
+}
+
+function interpolateEnv(raw: string): string {
+  return raw.replace(ENV_PLACEHOLDER_RE, (_, name: string, fallback?: string) => {
+    const value = process.env[name]
+    if (value !== undefined && value !== '') return value
+    if (fallback !== undefined) return fallback
+    throw new Error(`config: missing env var ${name}`)
+  })
+}
+
+function normalizeOptionalStrings(config: Config): void {
+  if (config.network && (config.network.proxy_url == null || config.network.proxy_url === '')) {
+    delete config.network.proxy_url
+  }
+  if (config.oauth.access_token == null || config.oauth.access_token === '') {
+    delete config.oauth.access_token
+  }
+  if (config.oauth.expires_at == null || Number.isNaN(Number(config.oauth.expires_at))) {
+    delete config.oauth.expires_at
+  } else if (typeof config.oauth.expires_at !== 'number') {
+    config.oauth.expires_at = Number(config.oauth.expires_at)
+  }
+  if (config.logging.file == null || config.logging.file === '') {
+    delete config.logging.file
+  }
+  if (config.logging.audit_file == null || config.logging.audit_file === '') {
+    delete config.logging.audit_file
+  }
+}
+
 export function loadConfig(configPath?: string): Config {
   const filePath = configPath || resolve(process.cwd(), 'config.yaml')
+  const envPath = resolve(dirname(filePath), '.env')
+
+  loadDotEnv(envPath)
+
   const raw = readFileSync(filePath, 'utf-8')
-  const config = parse(raw) as Config
+  const config = parse(interpolateEnv(raw)) as Config
+  normalizeOptionalStrings(config)
 
   if (!config.identity?.device_id || config.identity.device_id.includes('0000000000')) {
     throw new Error('config: identity.device_id must be set to a real 64-char hex value. Run: npm run generate-identity')

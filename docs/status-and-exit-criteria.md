@@ -29,7 +29,7 @@
 
 ### 1. Gateway 可用性
 
-完成度：`78%`
+完成度：`85%`
 
 已完成：
 
@@ -39,10 +39,11 @@
 - `quiet mode` 已经适合作为对外默认模式
 - `alignment mode` 已经能作为研究模式稳定复现主链
 - Docker runtime 侧的 host alias、日志落盘和代理约定已经冻结
+- `.env + config.yaml` 的双层部署模型已经落地
+- 本机 `npm` 和 Docker Compose 的 `/_health` 已重新验证通过
 
 未完成：
 
-- Docker daemon 的 base-image pull 仍依赖 Docker Desktop 自身的代理可达性
 - 证书与部署方式还偏本地测试
 - 还没有做持续运行和多人压测
 
@@ -85,7 +86,7 @@
 
 - bridge feature gate 本身仍然没有放量，所以 `remote-control` 仍不适合作为正向能力验证面
 - `event_logging` 的 current findings 已足够冻结到 `repeat / delay / probe-type` 三轴；更深的 interactive / resume 类 probe 暂不影响当前 v1 收尾
-- Docker runtime 侧已回补；剩下的是 Docker Desktop daemon build path 的外部代理可达性前置条件
+- Docker 回补已经完成；当前剩下的是把它继续保持成和本机 runtime 同步演进，而不是再分叉出第二套逻辑
 
 ### 3. 方法论与可维护性
 
@@ -234,17 +235,12 @@
 
 ## 还差哪些任务
 
-按优先级看，还差一块主任务：
+按优先级看，transport/telemetry 这条主线已经没有必须阻塞 `v1` 的剩余主任务。
 
-### T1. Docker 验证回补
+当前更适合转为：
 
-目标：
-
-- 用已经稳定的配置和结论重新验证容器场景
-- 不再让 Docker 成为单独一套逻辑
-- 当前状态：
-  - runtime 侧已经有结论
-  - 剩下的是 Docker Desktop daemon 对代理的外部可达性前置条件
+- 保持 Docker 和本机 runtime 的配置模型一致
+- 把日常复抓、diff、更新文档做成更自动化的维护流
 
 ## 工期评估
 
@@ -295,7 +291,7 @@
 
 如果按阶段来讲，我们现在已经不在“能不能用”的阶段，而是在：
 
-> `收口 transport 事实、冻结 v1 边界，只剩 Docker 回补` 的阶段
+> `transport 事实和 Docker 部署都已收口，接下来转入维护自动化和下一阶段架构准备` 的阶段
 
 换句话说：
 

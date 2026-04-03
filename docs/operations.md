@@ -7,6 +7,7 @@ This document records the current operational workflow for the existing gateway 
 It is intentionally practical:
 
 - what is needed before startup
+- where deployment variables now live
 - how to run locally with Docker
 - which credentials must be filled in
 - how to verify the container is working
@@ -38,6 +39,7 @@ Before the gateway can work against the real upstream, prepare:
 
 The current local deployment uses:
 
+- [.env.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.env.example)
 - [config.yaml](/C:/Users/94503/Documents/GitHub/cc-gateway/config.yaml)
 - [docker-compose.yml](/C:/Users/94503/Documents/GitHub/cc-gateway/docker-compose.yml)
 - [Dockerfile](/C:/Users/94503/Documents/GitHub/cc-gateway/Dockerfile)
@@ -46,29 +48,66 @@ The current local deployment uses:
 - [mitm/README.md](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/README.md)
 - [mitm/capture.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/capture.py)
 
+## Configuration Split
+
+The runtime now uses a two-layer config model:
+
+- `.env`: deployment-specific values and secrets
+- `config.yaml`: structured gateway persona and rewrite policy
+
+Put these in `.env`:
+
+- ports
+- TLS paths
+- upstream URL
+- proxy URL
+- OAuth tokens
+- client access tokens
+- canonical identity email and device ID
+- log paths and log level
+
+Keep these in `config.yaml`:
+
+- canonical `env`
+- `prompt_env`
+- `process`
+- client persona structure
+- rewrite policy defaults
+
+This keeps one `.env` reusable across:
+
+- local `npm start`
+- Docker Compose
+- future `admin-api` and `admin-web` services
+
 ## Credentials To Replace
 
-Before real use, replace these fields in [config.yaml](/C:/Users/94503/Documents/GitHub/cc-gateway/config.yaml):
+Before real use, replace these values in your local `.env`:
 
-- `oauth.refresh_token`
-- `identity.email`
+- `GATEWAY_OAUTH_REFRESH_TOKEN`
+- `GATEWAY_CLIENT_PRIMARY_TOKEN`
+- `GATEWAY_IDENTITY_DEVICE_ID`
+- `GATEWAY_IDENTITY_EMAIL`
 
 Review these values as well and adjust if needed:
 
-- `network.proxy_url`
-- `identity.device_id`
-- `auth.tokens`
-- `env.*`
-- `prompt_env.*`
-- `process.*`
-- `logging.file`
-- `logging.audit_file`
+- `GATEWAY_PROXY_URL`
+- `GATEWAY_SERVER_PORT`
+- `GATEWAY_PUBLIC_PORT`
+- `GATEWAY_TLS_CERT`
+- `GATEWAY_TLS_KEY`
+- `GATEWAY_LOG_FILE`
+- `GATEWAY_AUDIT_LOG_FILE`
+
+Then review [config.yaml](/C:/Users/94503/Documents/GitHub/cc-gateway/config.yaml) only if you want to change the canonical fingerprint persona.
 
 ## Local Docker Deployment
 
 ### 1. Build the image
 
 ```powershell
+Copy-Item .env.example .env
+Copy-Item config.example.yaml config.yaml
 .\scripts\inspect-docker-proxy-path.ps1
 docker compose build
 ```
@@ -83,21 +122,15 @@ Current Windows-specific rule:
 
 If your local proxy only listens on Windows loopback, the runtime path can still be fixed in-repo, but image pulls may continue to fail until Docker Desktop can reach that proxy.
 
+Compose now reads `.env` directly via `env_file`, and the gateway process resolves `${...}` placeholders from either `.env` or process environment variables.
+
 ### 2. Start the service
 
 ```powershell
 docker compose up -d
 ```
 
-If the upstream must be reached through a local or remote proxy, prefer setting it in [config.yaml](/C:/Users/94503/Documents/GitHub/cc-gateway/config.yaml):
-
-```yaml
-network:
-  proxy_url: http://host.docker.internal:10808
-```
-
-For Docker Desktop, `host.docker.internal` is the correct runtime-side host alias.  
-`127.0.0.1` inside the container points back to the container itself, not to the Windows host.
+If you want one `.env` to work for both local npm and Docker on the same Windows workstation, prefer a host LAN IP or another shared proxy endpoint. `127.0.0.1` only works for the host process, and `host.docker.internal` only works reliably inside the container.
 
 The repository Compose file now also includes:
 
@@ -303,10 +336,33 @@ Current secret handling is still minimal because the project is in proof-of-conc
 
 Current risks:
 
-- `refresh_token` is stored in plain text in `config.yaml`
-- client bearer tokens are also stored in `config.yaml`
+- `refresh_token` is stored in plain text in `.env`
+- client bearer tokens are also stored in `.env`
 
 Future control plane work should move these into encrypted persistent storage.
+
+## Recommended Research Environment
+
+For transport and telemetry research, prefer the local Node runtime:
+
+```powershell
+npm run build
+npm start
+```
+
+Why local npm is the better capture baseline:
+
+- it is closer to the official CLI process model
+- it avoids Docker Desktop proxy, NAT, and host-alias noise
+- it makes MITM, `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and `NODE_EXTRA_CA_CERTS` easier to control
+
+Use Docker for:
+
+- generic deployment validation
+- runtime packaging checks
+- operator smoke tests
+
+Do not use Docker as the primary baseline for fingerprint alignment work unless you are explicitly studying container-specific transport effects.
 
 ### Network Dependencies
 
