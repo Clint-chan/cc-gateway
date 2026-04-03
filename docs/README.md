@@ -42,6 +42,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [auth-mode-control-plane-matrix.md](./auth-mode-control-plane-matrix.md)
   Frozen matrix for auth-mode-sensitive control-plane behavior in the trusted via-gateway workflow.
 
+- [eval-field-matrix.md](./eval-field-matrix.md)
+  Field-level baseline for `/api/eval/*`, including the current direct-subscriber vs managed-oauth side-channel comparison.
+
 - [event-logging-threshold-workflow.md](./event-logging-threshold-workflow.md)
   Repeatable workflow for measuring the minimum trigger threshold of 1P event logging, including the current repeat-count x delay matrix.
 

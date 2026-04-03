@@ -1,0 +1,104 @@
+[
+  {
+    "path": "attributes.id",
+    "group": "stable-identity",
+    "expected_relation": "same-across-auth-modes",
+    "notes": "Stable device/user identifier and one of the remote-eval cache key attributes."
+  },
+  {
+    "path": "attributes.sessionId",
+    "group": "session-runtime",
+    "expected_relation": "changes-per-request",
+    "notes": "Per-process session UUID; expected to vary between captures and should not be canonicalized."
+  },
+  {
+    "path": "attributes.deviceID",
+    "group": "stable-identity",
+    "expected_relation": "same-across-auth-modes",
+    "notes": "Second copy of the stable device identifier used by GrowthBook."
+  },
+  {
+    "path": "attributes.platform",
+    "group": "stable-runtime",
+    "expected_relation": "same-across-auth-modes",
+    "notes": "Host platform for analytics, such as win32/darwin/linux."
+  },
+  {
+    "path": "attributes.apiBaseUrlHost",
+    "group": "transport-sensitive",
+    "expected_relation": "present-only-with-custom-base-url",
+    "notes": "Leaked custom ANTHROPIC_BASE_URL host; only appears when a non-default base URL is configured."
+  },
+  {
+    "path": "attributes.organizationUUID",
+    "group": "account-scope",
+    "expected_relation": "same-when-oauth-account-present",
+    "notes": "OAuth organization UUID; remote-eval cache key also depends on it."
+  },
+  {
+    "path": "attributes.accountUUID",
+    "group": "account-scope",
+    "expected_relation": "same-when-oauth-account-present",
+    "notes": "OAuth account UUID for the current Claude.ai identity."
+  },
+  {
+    "path": "attributes.userType",
+    "group": "account-scope",
+    "expected_relation": "same-across-auth-modes",
+    "notes": "Current captures report the same userType value across both baselines."
+  },
+  {
+    "path": "attributes.subscriptionType",
+    "group": "auth-model-sensitive",
+    "expected_relation": "present-in-direct-subscriber-absent-in-managed-oauth",
+    "notes": "Subscriber tier is suppressed when Claude Code is driven by inference-only env-token auth."
+  },
+  {
+    "path": "attributes.rateLimitTier",
+    "group": "auth-model-sensitive",
+    "expected_relation": "present-in-direct-subscriber-absent-in-managed-oauth",
+    "notes": "Rate-limit tier follows the same auth-model gating as subscriptionType."
+  },
+  {
+    "path": "attributes.firstTokenTime",
+    "group": "auth-model-sensitive",
+    "expected_relation": "present-in-direct-subscriber-absent-in-managed-oauth",
+    "notes": "Only emitted when subscription metadata is available from first-party auth."
+  },
+  {
+    "path": "attributes.email",
+    "group": "stable-identity",
+    "expected_relation": "same-when-oauth-account-present",
+    "notes": "Email stays available in both current baselines because OAuth account info is still present."
+  },
+  {
+    "path": "attributes.appVersion",
+    "group": "stable-runtime",
+    "expected_relation": "same-across-auth-modes",
+    "notes": "Claude Code app version."
+  },
+  {
+    "path": "attributes.githubActionsMetadata",
+    "group": "environment-optional",
+    "expected_relation": "optional-ci-only",
+    "notes": "Only present when Claude Code is running inside GitHub Actions."
+  },
+  {
+    "path": "url",
+    "group": "top-level",
+    "expected_relation": "blank-string",
+    "notes": "Current eval payloads leave the top-level url empty."
+  },
+  {
+    "path": "forcedVariations",
+    "group": "top-level",
+    "expected_relation": "empty-object",
+    "notes": "Usually empty unless local GrowthBook overrides are injected."
+  },
+  {
+    "path": "forcedFeatures",
+    "group": "top-level",
+    "expected_relation": "empty-array",
+    "notes": "Usually empty unless local GrowthBook overrides are injected."
+  }
+]

@@ -147,6 +147,36 @@
   - 当前 probe matrix 只冻结了 `--print` 路径，不代表 interactive 或 resume/continue 路径一定等价
   - 这条结论更适合指导“如何复抓和快速定位”，不应直接外推成生产配置建议
 
+### A-000d Eval 字段矩阵冻结
+
+- 日期：2026-04-03
+- 证据：
+  - [eval-field-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/eval-field-matrix.md)
+  - [eval_field_matrix_2026-04-03.json](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/eval_field_matrix_2026-04-03.json)
+  - [growthbook.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/growthbook.ts)
+  - [user.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/user.ts)
+  - [auth.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/auth.ts)
+- 当前差异：
+  - 之前我们只知道 `/api/eval/*` 存在、受 auth mode 影响，也知道 gateway 已有一部分 `rewriteEvalBody()` 覆盖。
+  - 但还没有冻结“到底哪些字段在两个基线里稳定、哪些字段是 auth-model-sensitive、哪些字段只是 session/runtime 噪音”。
+- 处理动作：
+  - 新增字段目标清单：
+    - [eval_attribute_targets.json](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/eval_attribute_targets.json)
+  - 新增结构化提取脚本：
+    - [summarize_eval_field_matrix.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/summarize_eval_field_matrix.py)
+  - 用两条已冻结基线生成了结构化矩阵：
+    - `direct-subscriber`
+    - `managed-oauth-via-gateway-side-channel`
+- 回归验证：
+  - 当前矩阵已经冻结出 4 类结论：
+    - `subscriptionType`、`rateLimitTier`、`firstTokenTime` 在 direct subscriber 存在，在 managed-oauth side-channel 消失
+    - `apiBaseUrlHost` 只在 custom base URL 侧出现
+    - `sessionId` 在 side-channel capture 中按请求变化
+    - `id`、`deviceID`、`organizationUUID`、`accountUUID`、`email`、`appVersion` 等字段在当前两条基线上保持稳定
+- 剩余风险：
+  - 当前矩阵只冻结到 `managed-oauth` 的 via-gateway side-channel，不代表 `external-auth-token` 下一定等价
+  - 如果 upstream 扩展 eval schema，必须先更新字段目标清单，再重新生成矩阵
+
 ### A-001 显式代理链路
 
 - 日期：2026-04-03

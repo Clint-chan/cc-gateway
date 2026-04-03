@@ -1,0 +1,473 @@
+﻿{
+  "generated_at": "2026-04-03T15:26:17.698404+00:00",
+  "label": "2026-04-03-baseline",
+  "targets_path": "mitm/eval_attribute_targets.json",
+  "sources": [
+    {
+      "label": "direct-subscriber",
+      "flows_path": "mitm\\direct.flows",
+      "eval_request_count": 1,
+      "sample_urls": [
+        "https://api.anthropic.com/api/eval/sdk-zAZezfDKGoZuXXKe"
+      ]
+    },
+    {
+      "label": "managed-oauth-via-gateway-side-channel",
+      "flows_path": "mitm\\dual-direct.flows",
+      "eval_request_count": 2,
+      "sample_urls": [
+        "https://api.anthropic.com/api/eval/sdk-zAZezfDKGoZuXXKe"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "path": "attributes.id",
+      "group": "stable-identity",
+      "expected_relation": "same-across-auth-modes",
+      "notes": "Stable device/user identifier and one of the remote-eval cache key attributes.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            "388cb0f69951ccabca8dd9d11ca422d73db84a1d30a069cde0f16fd87496bf5e"
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            "388cb0f69951ccabca8dd9d11ca422d73db84a1d30a069cde0f16fd87496bf5e"
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "same"
+      }
+    },
+    {
+      "path": "attributes.sessionId",
+      "group": "session-runtime",
+      "expected_relation": "changes-per-request",
+      "notes": "Per-process session UUID; expected to vary between captures and should not be canonicalized.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            "0eb9365f-ab58-44ac-8b61-08de1a2b6d4c"
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            "215919df-18b9-4864-8382-12fade3c68e4",
+            "046f9c2a-11d3-42ba-94ad-471c74495137"
+          ],
+          "stability": "variable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "different"
+      }
+    },
+    {
+      "path": "attributes.deviceID",
+      "group": "stable-identity",
+      "expected_relation": "same-across-auth-modes",
+      "notes": "Second copy of the stable device identifier used by GrowthBook.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            "388cb0f69951ccabca8dd9d11ca422d73db84a1d30a069cde0f16fd87496bf5e"
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            "388cb0f69951ccabca8dd9d11ca422d73db84a1d30a069cde0f16fd87496bf5e"
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "same"
+      }
+    },
+    {
+      "path": "attributes.platform",
+      "group": "stable-runtime",
+      "expected_relation": "same-across-auth-modes",
+      "notes": "Host platform for analytics, such as win32/darwin/linux.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            "win32"
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            "win32"
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "same"
+      }
+    },
+    {
+      "path": "attributes.apiBaseUrlHost",
+      "group": "transport-sensitive",
+      "expected_relation": "present-only-with-custom-base-url",
+      "notes": "Leaked custom ANTHROPIC_BASE_URL host; only appears when a non-default base URL is configured.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 0,
+          "request_count": 1,
+          "distinct_values": [],
+          "stability": "absent"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            "localhost:9443"
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "absent-in-left"
+      }
+    },
+    {
+      "path": "attributes.organizationUUID",
+      "group": "account-scope",
+      "expected_relation": "same-when-oauth-account-present",
+      "notes": "OAuth organization UUID; remote-eval cache key also depends on it.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            "00501b85-0e0e-4fb9-8c83-edc515853e77"
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            "00501b85-0e0e-4fb9-8c83-edc515853e77"
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "same"
+      }
+    },
+    {
+      "path": "attributes.accountUUID",
+      "group": "account-scope",
+      "expected_relation": "same-when-oauth-account-present",
+      "notes": "OAuth account UUID for the current Claude.ai identity.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            "47a1f777-19f7-4be5-9268-e80b5b98a5e1"
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            "47a1f777-19f7-4be5-9268-e80b5b98a5e1"
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "same"
+      }
+    },
+    {
+      "path": "attributes.userType",
+      "group": "account-scope",
+      "expected_relation": "same-across-auth-modes",
+      "notes": "Current captures report the same userType value across both baselines.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            "external"
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            "external"
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "same"
+      }
+    },
+    {
+      "path": "attributes.subscriptionType",
+      "group": "auth-model-sensitive",
+      "expected_relation": "present-in-direct-subscriber-absent-in-managed-oauth",
+      "notes": "Subscriber tier is suppressed when Claude Code is driven by inference-only env-token auth.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            "max"
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 0,
+          "request_count": 2,
+          "distinct_values": [],
+          "stability": "absent"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "absent-in-right"
+      }
+    },
+    {
+      "path": "attributes.rateLimitTier",
+      "group": "auth-model-sensitive",
+      "expected_relation": "present-in-direct-subscriber-absent-in-managed-oauth",
+      "notes": "Rate-limit tier follows the same auth-model gating as subscriptionType.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            "default_claude_max_5x"
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 0,
+          "request_count": 2,
+          "distinct_values": [],
+          "stability": "absent"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "absent-in-right"
+      }
+    },
+    {
+      "path": "attributes.firstTokenTime",
+      "group": "auth-model-sensitive",
+      "expected_relation": "present-in-direct-subscriber-absent-in-managed-oauth",
+      "notes": "Only emitted when subscription metadata is available from first-party auth.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            1775208890658
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 0,
+          "request_count": 2,
+          "distinct_values": [],
+          "stability": "absent"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "absent-in-right"
+      }
+    },
+    {
+      "path": "attributes.email",
+      "group": "stable-identity",
+      "expected_relation": "same-when-oauth-account-present",
+      "notes": "Email stays available in both current baselines because OAuth account info is still present.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            "bodedreyer@gmail.com"
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            "bodedreyer@gmail.com"
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "same"
+      }
+    },
+    {
+      "path": "attributes.appVersion",
+      "group": "stable-runtime",
+      "expected_relation": "same-across-auth-modes",
+      "notes": "Claude Code app version.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            "2.1.91"
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            "2.1.91"
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "same"
+      }
+    },
+    {
+      "path": "attributes.githubActionsMetadata",
+      "group": "environment-optional",
+      "expected_relation": "optional-ci-only",
+      "notes": "Only present when Claude Code is running inside GitHub Actions.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 0,
+          "request_count": 1,
+          "distinct_values": [],
+          "stability": "absent"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 0,
+          "request_count": 2,
+          "distinct_values": [],
+          "stability": "absent"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "both-absent"
+      }
+    },
+    {
+      "path": "url",
+      "group": "top-level",
+      "expected_relation": "blank-string",
+      "notes": "Current eval payloads leave the top-level url empty.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            ""
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            ""
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "same"
+      }
+    },
+    {
+      "path": "forcedVariations",
+      "group": "top-level",
+      "expected_relation": "empty-object",
+      "notes": "Usually empty unless local GrowthBook overrides are injected.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            {}
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            {}
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "same"
+      }
+    },
+    {
+      "path": "forcedFeatures",
+      "group": "top-level",
+      "expected_relation": "empty-array",
+      "notes": "Usually empty unless local GrowthBook overrides are injected.",
+      "sources": {
+        "direct-subscriber": {
+          "present_count": 1,
+          "request_count": 1,
+          "distinct_values": [
+            []
+          ],
+          "stability": "stable"
+        },
+        "managed-oauth-via-gateway-side-channel": {
+          "present_count": 2,
+          "request_count": 2,
+          "distinct_values": [
+            []
+          ],
+          "stability": "stable"
+        }
+      },
+      "relations": {
+        "direct-subscriber__vs__managed-oauth-via-gateway-side-channel": "same"
+      }
+    }
+  ]
+}

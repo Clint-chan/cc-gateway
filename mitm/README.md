@@ -20,6 +20,8 @@ Every time a capture leads to a concrete alignment fix, also append the conclusi
 - `capture.py`: mitmdump addon for request/response capture
 - `extract_signals.py`: extract the latest request's key fingerprint signals from a `.flows` file
 - `diff_signals.py`: compare the latest key signals from direct and gateway captures
+- `summarize_eval_field_matrix.py`: summarize `/api/eval/*` fields across multiple capture baselines
+- `eval_attribute_targets.json`: maintained target list for eval-field tracking
 - `claude-cli.flows`: direct Claude CLI flow dump
 - `claude-cli.log`: parsed direct Claude CLI request log
 - `direct-debug.txt`: direct `claude -p "hello"` success log
@@ -108,6 +110,12 @@ Compare the latest `/v1/messages` request specifically:
 
 ```powershell
 python mitm/diff_signals.py mitm/claude-cli.flows mitm/gateway.flows /v1/messages
+```
+
+Generate the current `/api/eval/*` field matrix baseline:
+
+```powershell
+python mitm/summarize_eval_field_matrix.py --label current-baseline --format json
 ```
 
 Start a fresh direct capture session:

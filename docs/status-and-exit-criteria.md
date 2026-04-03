@@ -47,7 +47,7 @@
 
 ### 2. Transport / Telemetry 事实层
 
-完成度：`93%`
+完成度：`95%`
 
 已完成：
 
@@ -74,16 +74,21 @@
 - 已确认 `auth mode` 是独立于 `traffic mode` 的第二个高优先级变量
 - 已确认 Grove / account settings 在当前 via-gateway 两种 auth mode 下属于 `auth-model-suppressed`，不是简单的 “not-observed”
 - 已确认 `remote-control` 当前应视为 bridge entitlement probe，而不是通用 `/api/eval/*` probe
+- 已冻结 `/api/eval/*` 字段矩阵：
+  - `subscriptionType` / `rateLimitTier` / `firstTokenTime` 属于 `auth-model-sensitive`
+  - `apiBaseUrlHost` 属于 `transport-sensitive`
+  - `sessionId` 属于 `session-runtime`
+  - 主体 identity/account 字段在当前两个基线上保持稳定
 
 未完成：
 
-- `/api/eval/*` 在 gateway 场景下已经重新确认为 direct side-channel，但相关字段矩阵还没完全冻结
 - bridge feature gate 本身仍然没有放量，所以 `remote-control` 仍不适合作为正向能力验证面
 - `event_logging` 的 current findings 已足够冻结到 `repeat / delay / probe-type` 三轴；更深的 interactive / resume 类 probe 暂不影响当前 v1 收尾
+- Docker 场景还没回补验证
 
 ### 3. 方法论与可维护性
 
-完成度：`98%`
+完成度：`99%`
 
 已完成：
 
@@ -97,6 +102,7 @@
 - 有 event_logging 阈值扫面脚本和专项 workflow
 - 有 `RepeatCount x DelayMilliseconds` 的矩阵 sweep 工作流和结构化结果
 - 有 `probe-type` 矩阵工作流和结构化结果
+- 有 `/api/eval/*` 字段目标清单、提取脚本和结构化基线结果
 - 有半自动化路线图
 - 有仓库布局规范
 - 有 URL 过滤提取和双通道 capture 脚本
@@ -153,6 +159,17 @@
   - 它在 gateway 场景下怎么走
   - 我们能统一多少
   - 不能统一的部分是否要靠 quiet mode 或网络层压制
+
+### 结论四：`/api/eval/*` 的字段分层已经冻结
+
+这意味着：
+
+- 后续再看到 eval 变化时，不用先翻源码猜字段意义
+- 可以直接按矩阵判断它属于：
+  - auth model 变化
+  - transport/base URL 变化
+  - session/runtime 噪音
+  - 真实新增 schema
 
 ## 当前阶段的收尾定义
 
@@ -216,35 +233,9 @@
 
 ## 还差哪些任务
 
-按优先级看，还差两块：
+按优先级看，还差一块主任务：
 
-### T1. trusted via-gateway 对照
-
-价值最高。
-
-目标：
-
-- 用 trusted workspace + gateway + MITM
-- 跑完 `managed-oauth` 与 `external-auth-token` 两条接入模型
-- 直接回答“这些链路在 gateway 场景下到底怎么走”
-
-当前进展：
-
-- 主链与一部分 direct side channel 已拆开
-- `/api/eval/*` 已确认会受 auth mode 直接影响
-- auth-mode-sensitive 控制面矩阵已经单独冻结成资产
-- `event_logging` 的最小稳定触发条件已经从“猜 2 次”收敛到：
-  - `RepeatCount=2` 属于 delay-sensitive 命中区间
-  - `RepeatCount=3` 是跨 `0 / 250 / 1000ms` 的稳定下界
-- `event_logging` 的 probe-type 维度也已经冻结：
-  - `hello`
-  - `hello-json-verbose`
-  - `hello-stream-json-verbose`
-- 当前剩余重点只剩：
-  - `/api/eval/*` 的字段矩阵继续冻结
-  - Docker 场景回补验证
-
-### T2. Docker 验证回补
+### T1. Docker 验证回补
 
 目标：
 
@@ -300,12 +291,12 @@
 
 如果按阶段来讲，我们现在已经不在“能不能用”的阶段，而是在：
 
-> `收口 transport 事实、冻结 v1 边界` 的阶段
+> `收口 transport 事实、冻结 v1 边界，只剩 Docker 回补` 的阶段
 
 换句话说：
 
 - 不是从 0 到 1
-- 是从 `0.78` 到 `1.0`
+- 是从 `0.95` 到 `1.0`
 
 这个阶段最重要的不是继续铺功能，而是：
 

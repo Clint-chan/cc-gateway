@@ -159,6 +159,8 @@
 5. 当前最需要先区分的不是“gateway 有没有改写”，而是：
    - 哪个 transport surface 真正会发
    - 哪个 probe 只是更早被命令逻辑短路了
+6. 当前 `/api/eval/*` 的字段矩阵已经独立冻结，后续字段级变化不要继续塞回这份调查文档，而是看：
+   - [eval-field-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/eval-field-matrix.md)
 
 ## 推荐的验证顺序
 

@@ -74,6 +74,12 @@ python mitm\extract_signals.py mitm\direct.flows 20 /api/event_logging/
 python mitm\extract_signals.py mitm\direct.flows 20 /v1/messages
 ```
 
+如果怀疑 `/api/eval/*` 是“字段变了”而不是“有没有发出来”，直接补跑：
+
+```powershell
+python mitm/summarize_eval_field_matrix.py --label current-baseline --format json
+```
+
 ### 第 3 步：跑 via-gateway 对照
 
 然后用同样的 workspace、同样的 probe、同样的 auth mode 跑 gateway。

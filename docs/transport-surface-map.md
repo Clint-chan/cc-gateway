@@ -101,6 +101,8 @@
   - `external-auth-token` 不会出现 `/api/eval/*`
 - 备注：
   这说明 `/api/eval/*` 不只是受 traffic mode 和时序影响，也受 auth mode 影响
+  字段层基线已冻结到：
+  - [eval-field-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/eval-field-matrix.md)
 
 #### 2.2 1P event logging
 

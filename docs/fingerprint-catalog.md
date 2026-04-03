@@ -48,6 +48,8 @@
 - [probe-growthbook-eval-direct.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-growthbook-eval-direct.ps1)
 - [extract_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/extract_signals.py)
 - [diff_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/diff_signals.py)
+- [summarize_eval_field_matrix.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/summarize_eval_field_matrix.py)
+- [eval_attribute_targets.json](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/eval_attribute_targets.json)
 
 ### 参考源码目录
 
@@ -223,16 +225,23 @@
   - `attributes.appVersion`
   - `attributes.apiBaseUrlHost`
   - 顶层 `url`
+- 当前字段基线：
+  - [eval-field-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/eval-field-matrix.md)
+  - [eval_field_matrix_2026-04-03.json](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/eval_field_matrix_2026-04-03.json)
 - 当前未完全覆盖：
   - `sessionId`
   - `organizationUUID`
   - `accountUUID`
   - `subscriptionType`
   - `rateLimitTier`
-- 当前调查状态：
-  - headless `-p` 路径在 [print.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/cli/print.ts) 中只会 `void initializeGrowthBook()`
-  - local-jsx blocking gate 命令如果当前 cwd 没 trust，GrowthBook 也可能拿不到 auth headers
-  - 详见 [growthbook-eval-investigation.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/growthbook-eval-investigation.md)
+- 当前已冻结结论：
+  - 当前 trusted via-gateway 路径里，`/api/eval/*` 仍属于 direct-host side channel，不经过 gateway 上游
+  - `subscriptionType`、`rateLimitTier`、`firstTokenTime` 已冻结为 `auth-model-sensitive`
+  - `apiBaseUrlHost` 已冻结为 `transport-sensitive`
+  - `sessionId` 已冻结为 `session-runtime`
+- 当前调查与基线：
+  - [growthbook-eval-investigation.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/growthbook-eval-investigation.md)
+  - [eval-field-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/eval-field-matrix.md)
 - 模式注意：
   `quiet mode` 下这一路本来就不会发，只有 `alignment mode` 才适合验证
 - auth 注意：
@@ -240,7 +249,8 @@
 - 快速检查：
   - [inspect-growthbook-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-growthbook-state.ps1)
 - 后续更新方式：
-  需要专门复抓一轮带 eval 的请求，核对 gateway 实际出站体
+  先重抓 direct subscriber 与 trusted via-gateway side-channel 两个基线，再运行：
+  - [summarize_eval_field_matrix.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/summarize_eval_field_matrix.py)
 
 #### 3.2 Grove 控制面
 
