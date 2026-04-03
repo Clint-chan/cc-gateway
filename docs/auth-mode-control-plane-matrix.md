@@ -63,11 +63,19 @@
 | `/api/claude_code_grove` | 否 | 否 | 否 | 否 | `not-observed` | 当前 via-gateway 最小 probe 里还没重新看到，不能据此认定已消失 |
 | `/api/event_logging/v2/batch` | 否 | 否 | 否 | 否 | `not-observed` | 单次最小 probe 不足以稳定触发 |
 
-### timing 补充：managed-oauth 重复 probe
+### timing 补充：managed-oauth 阈值扫面
 
-| Surface | managed-oauth direct (`RepeatCount=2`) | managed-oauth gateway (`RepeatCount=2`) | 当前 owner | 结论 |
-| --- | --- | --- | --- | --- |
-| `/api/event_logging/v2/batch` | 是 | 否 | `direct-host-side-channel` | 这条链不是“不发”，而是当前最小单次 probe 下更容易被时序掩盖 |
+| RepeatCount | managed-oauth direct event_logging | managed-oauth gateway event_logging | 当前结论 |
+| --- | --- | --- | --- |
+| `1` | 否 | 否 | 单次最小 probe 不足以稳定触发 |
+| `2` | 否 | 否 | 当前机器和延迟下仍不稳定，不能冻结成阈值 |
+| `3` | 是 | 否 | 当前已验证的可复现下界 |
+| `5` | 是 | 否 | 继续稳定出现，仍为 direct side-channel |
+
+备注：
+
+- `RepeatCount=2` 过去曾有一次命中记录，但最新 sweep 已证明它不是稳定阈值
+- `event_logging` 的专项阈值方法统一看 [event-logging-threshold-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-threshold-workflow.md)
 
 ## 为什么要单独冻成矩阵
 
@@ -107,14 +115,16 @@ powershell -ExecutionPolicy Bypass -File .\scripts\finalize-dual-via-gateway.ps1
 python mitm\summarize_control_plane_matrix.py --mode-label managed-oauth-r1
 ```
 
-### 3. managed-oauth 重复 probe
+### 3. managed-oauth 阈值扫面
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\capture-dual-via-gateway.ps1 -AuthMode managed-oauth
-powershell -ExecutionPolicy Bypass -File .\scripts\probe-trusted-via-gateway.ps1 -EnableDirectMitm -AuthMode managed-oauth -RepeatCount 2
-powershell -ExecutionPolicy Bypass -File .\scripts\finalize-dual-via-gateway.ps1 -StopGateway
-python mitm\summarize_control_plane_matrix.py --mode-label managed-oauth-r2
+powershell -ExecutionPolicy Bypass -File .\scripts\sweep-event-logging-threshold.ps1 -RepeatCounts 1,2,3,5
 ```
+
+如果当前目标不是补整张控制面矩阵，而是专门确认 `event_logging` 的最小稳定触发阈值，直接走：
+
+- [event-logging-threshold-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-threshold-workflow.md)
 
 ## 推荐归档方式
 

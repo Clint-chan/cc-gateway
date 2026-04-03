@@ -224,15 +224,16 @@ python mitm\summarize_control_plane_matrix.py --mode-label managed-oauth-combine
 - direct side-channel MITM 看到：
   - `POST /api/eval/sdk-*`
   - `GET /mcp-registry/v0/servers`
-- 如果使用 `-RepeatCount 2` 再跑一次最小 probe，direct side-channel 还会出现：
-  - `POST /api/event_logging/v2/batch`
+- 如果走专项 threshold sweep，当前已确认：
+  - `RepeatCount=1`、`2` 时 `event_logging` 仍可能不出现
+  - `RepeatCount=3`、`5` 时 `event_logging` 已重新出现
 
 这说明：
 
 - 最小 via-gateway 请求里，主链和 side channel 已经可以被明确拆开
 - `ANTHROPIC_AUTH_TOKEN` 与 `CLAUDE_CODE_OAUTH_TOKEN` 不只是“不同写法”，而是会切换客户端的 subscriber / OAuth 叙事
 - `/api/eval/*` 是否出现，已经确认会受 auth mode 直接影响
-- `/api/event_logging/*` 在 `managed-oauth` 下不是完全不发，而是单次最小 probe 里更容易被时序掩盖；重复 probe 后已确认它仍然是 direct side-channel
+- `/api/event_logging/*` 在 `managed-oauth` 下不是完全不发，而是明显受批处理时序影响；当前 threshold sweep 已确认 `1`、`2` 不稳定，`3`、`5` 可重现
 - auth-mode-sensitive 的当前基线，统一收口到 [auth-mode-control-plane-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/auth-mode-control-plane-matrix.md)
 
 ## 维护规则

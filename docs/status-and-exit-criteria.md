@@ -47,7 +47,7 @@
 
 ### 2. Transport / Telemetry 事实层
 
-完成度：`84%`
+完成度：`86%`
 
 已完成：
 
@@ -62,7 +62,9 @@
   - gateway 上游稳定看到 `/v1/messages`
   - `external-auth-token` 下 direct side-channel 稳定看到 `/v1/mcp_servers`、`/api/claude_cli/bootstrap`、`/api/claude_code_penguin_mode`、`/mcp-registry`
   - `managed-oauth` 下 direct side-channel 已重新看到 `/api/eval/sdk-*`
-  - `managed-oauth + RepeatCount=2` 下 direct side-channel 已重新看到 `/api/event_logging/v2/batch`
+  - `managed-oauth` 的 threshold sweep 已确认：
+    - `RepeatCount=1`、`2` 不稳定
+    - `RepeatCount=3`、`5` 已重新看到 `/api/event_logging/v2/batch`
 - 已确认 `NO_PROXY=localhost,127.0.0.1` 是双通道 workflow 的硬条件
 - 已确认 `auth mode` 是独立于 `traffic mode` 的第二个高优先级变量
 
@@ -75,7 +77,7 @@
 
 ### 3. 方法论与可维护性
 
-完成度：`92%`
+完成度：`94%`
 
 已完成：
 
@@ -86,6 +88,7 @@
 - 有 trusted capture workflow
 - 有 trusted `via-gateway` 双通道 workflow
 - 有 auth-mode-sensitive 控制面矩阵文档和结构化目标清单
+- 有 event_logging 阈值扫面脚本和专项 workflow
 - 有半自动化路线图
 - 有仓库布局规范
 - 有 URL 过滤提取和双通道 capture 脚本
@@ -222,8 +225,9 @@
 - 主链与一部分 direct side channel 已拆开
 - `/api/eval/*` 已确认会受 auth mode 直接影响
 - auth-mode-sensitive 控制面矩阵已经单独冻结成资产
+- `event_logging` 的最小稳定触发条件已经从“猜 2 次”收敛到“当前已验证下界是 3 次”
 - 当前剩余重点只剩：
-  - `/api/event_logging/*` 的最小稳定触发矩阵
+  - `/api/event_logging/*` 的更小 delay / 更少 probe 是否还能稳定命中
   - auth-mode-sensitive 控制面矩阵继续补全未观察到的行
 
 ### T2. event logging 的 trusted 时序复抓

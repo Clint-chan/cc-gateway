@@ -631,6 +631,42 @@
   - `/api/oauth/account/settings` 和 `/api/claude_code_grove` 在 via-gateway 最小 probe 里仍未重新出现
   - `event_logging` 的最小稳定触发阈值还要继续补
 
+### A-024 `event_logging` 阈值扫面已经得到当前可复现下界
+
+- 日期：2026-04-03
+- 证据：
+  - [sweep-event-logging-threshold.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-threshold.ps1)
+  - [event-logging-threshold-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-threshold-workflow.md)
+  - [dual-direct.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/dual-direct.log)
+  - [dual-gateway.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/dual-gateway.log)
+- 当前差异：
+  - 我们之前只能说：
+    - `RepeatCount=2` 曾经抓到过一次
+    - 但还不能证明这是稳定阈值
+  - 新的专项 sweep 已确认，在当前固定条件下：
+    - `RepeatCount=1` 时 `event_logging` 没出现
+    - `RepeatCount=2` 时 `event_logging` 仍没出现
+    - `RepeatCount=3`、`5` 时 `event_logging` 已重新出现
+  - 这意味着：
+    - `2` 不是当前可冻结的稳定阈值
+    - 当前已验证的可复现下界是 `3`
+- 处理动作：
+  - 新增 [sweep-event-logging-threshold.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/sweep-event-logging-threshold.ps1)
+  - 修复 PowerShell 参数解析，确保 `-RepeatCounts 1,2` 不再被错误吃成 `12`
+  - 新增 [event-logging-threshold-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-threshold-workflow.md)
+  - 把阈值结论回写到：
+    - [auth-mode-control-plane-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/auth-mode-control-plane-matrix.md)
+    - [trusted-capture-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/trusted-capture-workflow.md)
+    - [fingerprint-catalog.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/fingerprint-catalog.md)
+- 回归验证：
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\sweep-event-logging-threshold.ps1 -RepeatCounts 1,2`
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\sweep-event-logging-threshold.ps1 -RepeatCounts 3,5`
+- 剩余风险：
+  - 这里冻结的是当前机器/账号/延迟 `250ms` 下的经验下界，不是跨环境定律
+  - 还要继续验证：
+    - 更小 delay 下是否仍然 `3` 次即可
+    - 是否存在不同 session 生命周期导致的波动
+
 ## 下一步优先级
 
 1. 专项触发 `/api/eval/*`，验证它到底是 headless 退出问题还是场景问题
