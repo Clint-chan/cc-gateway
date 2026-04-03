@@ -343,10 +343,72 @@
   - `BASE_API_URL` 系列控制面路径还要继续细分哪些是“允许自定义 OAuth base”与哪些是“始终 prod/staging”
   - 后续抓包要验证这些源码结论在当前版本里是否都还成立
 
+### A-015 alignment mode 头less 实抓结果
+
+- 日期：2026-04-03
+- 证据：
+  - [direct.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/direct.log)
+  - [direct.flows](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/direct.flows)
+  - [gateway.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/gateway.log)
+  - [gateway.flows](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/gateway.flows)
+- 当前差异：
+  - 在 `alignment mode` 下重新跑最小 headless 请求：
+    - direct CLI 发出了：
+      - `POST /api/event_logging/v2/batch`
+      - `POST /v1/messages?beta=true`
+    - gateway 场景也发出了：
+      - `POST /api/event_logging/v2/batch`
+      - `POST /v1/messages?beta=true`
+  - 但 `gateway` 抓包中的 `event_logging` 事件仍然带着真实本机侧信号：
+    - `device_id = 388c...`
+    - `platform = win32`
+    - `version = 2.1.91`
+  - 同一次 gateway 抓包里的 `/v1/messages` 已经是 canonical device：
+    - `device_id = 9253...`
+- 处理动作：
+  - 正式确认：
+    - `headless + alignment mode` 会发 `1P event logging`
+    - 这一路在当前架构下不经过 gateway 改写
+  - transport ownership 目录和指纹目录同步更新
+- 回归验证：
+  - direct 最小请求成功返回 `Hello! How can I help you today?`
+  - gateway 最小请求也成功返回 `Hello! How can I help you today?`
+  - `/v1/messages` diff 仍然只剩：
+    - canonical `device_id`
+    - `cch` 剥离
+- 剩余风险：
+  - 这意味着如果用户不开 `quiet mode`，真实本机 `event_logging` 仍会直连 first-party 并暴露环境指纹。
+  - 生产使用必须继续坚持 `quiet mode`，研究时才切到 `alignment mode`。
+
+### A-016 `/api/eval/*` 在当前 headless 最小路径里仍未出现
+
+- 日期：2026-04-03
+- 证据：
+  - [direct.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/direct.log)
+  - [gateway.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/gateway.log)
+  - [print.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/cli/print.ts)
+  - [growthbook.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/growthbook.ts)
+- 当前差异：
+  - 在 direct 和 gateway 的当前最小 headless 请求里，都没有捕获到 `/api/eval/*`。
+  - 但旧抓包里这一路存在，源码里 headless 也会 `void initializeGrowthBook()`。
+- 处理动作：
+  - 先记录为“当前触发条件未满足”，不误判成 gateway 改写缺失。
+  - 下一轮改为专项追：
+    - `headless` 退出时序
+    - `initializeGrowthBook()` 的异步完成条件
+    - 是否需要 interactive 场景或更长生命周期才能稳定触发
+- 回归验证：
+  - 当前 direct / gateway 最小请求日志都只出现：
+    - `event_logging`
+    - `v1/messages`
+- 剩余风险：
+  - `/api/eval/*` 仍是当前未完全验掉的面
+  - 不能因为 `/api/eval/*` 没抓到，就默认这一路已经安全
+
 ## 下一步优先级
 
-1. 在 `alignment mode` 下重新抓取 direct CLI 与 gateway 上游流量
-2. 逐项核对 `/v1/messages`、`/api/eval/*`、`/api/event_logging/*`
-3. 用 transport ownership 地图继续细分 `BASE_API_URL` 控制面
+1. 专项触发 `/api/eval/*`，验证它到底是 headless 退出问题还是场景问题
+2. 用 transport ownership 地图继续细分 `BASE_API_URL` 控制面
+3. 评估有没有办法把 direct-host side channel 也纳入统一出口或显式压制
 4. 根据抓包差异继续补头部、body 和控制面请求
 5. 评估 persona 分组策略，而不是把所有账号都压成同一个静态模板

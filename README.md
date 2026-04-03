@@ -105,6 +105,8 @@ Add these environment variables on each client machine. No browser login needed.
 
 This is the recommended production/tester mode. It suppresses nonessential side-channel traffic on purpose.
 
+Keep this enabled for real users. Current alignment captures confirm that if you remove it, `1P event logging` can still bypass the gateway and expose the workstation's real environment.
+
 ```bash
 # Route all Claude Code traffic through the gateway
 export ANTHROPIC_BASE_URL="https://gateway.your-domain.com:8443"

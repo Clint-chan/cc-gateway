@@ -98,6 +98,8 @@
   默认 `baseUrl` 是 `https://api.anthropic.com`
 - 备注：
   只有 `quiet mode` 关闭它，或者额外网络层代理接管它
+- 最新实抓：
+  在 `alignment mode + custom base URL + headless` 的当前最小请求里，这一路仍然会发，而且会绕过 gateway，直接暴露真实本机环境
 
 #### 2.3 metrics opt-out
 
@@ -197,6 +199,8 @@ CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 - `/v1/messages`
 - Files API
 - 以及 gateway 主链上的 persona 一致性
+
+如果不开 `quiet mode`，当前已确认 `1P event logging` 仍会旁路直连并带出真实本机指纹。
 
 ### 如果目标是研究最新 first-party 遥测
 

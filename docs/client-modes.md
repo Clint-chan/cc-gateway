@@ -50,6 +50,8 @@
 
 它的目标不是“研究最新遥测面”，而是“减少 side channel，让实际使用更干净”。
 
+当前实抓已经确认：如果不开 `quiet mode`，`1P event logging` 仍会在 custom base URL 场景下直连 first-party，并带真实本机指纹。
+
 ## 模式二：alignment mode
 
 ### 适用场景
@@ -80,6 +82,7 @@
 - GrowthBook 和 1P event logging 有资格重新出现
 - 但它们不一定跟随 `ANTHROPIC_BASE_URL`
 - 其中一部分会继续直指 `api.anthropic.com`
+- 当前已确认 `1P event logging` 就属于这类直连面
 
 ### 额外要求
 

@@ -137,6 +137,7 @@
 4. `cch` 这类 native attestation 无法靠 Node 网关自动补齐
 5. custom base URL 会让一部分 only-first-party 控制面路径直接失去资格，自动 diff 时必须区分“未发送”和“发送后不一致”
 6. 一部分 side channel 默认并不跟 `ANTHROPIC_BASE_URL` 走，自动化采集必须结合 [transport-surface-map.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/transport-surface-map.md) 判断采集入口
+7. 当前 headless 最小请求已确认会发 `event_logging`，但还没有稳定触发 `/api/eval/*`
 
 ## 结论
 

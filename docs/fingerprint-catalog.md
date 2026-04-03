@@ -242,7 +242,11 @@
   - `arrayBuffers`
   - `cpuPercent`
 - 当前未完全验证：
-  自定义 base URL 场景下，CLI 本身可能不再发送这一路，因此需要更专门的触发方式来复抓
+  当前 headless 最小请求已经确认这一路会发，但在 gateway 场景下它仍然走 direct-host side channel，而不是经过 gateway
+- 最新实抓：
+  [gateway.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/gateway.log) 已确认：
+  - `/api/event_logging/v2/batch` 仍带真实 `win32` 环境和真实 `device_id`
+  - 同一次抓包里的 `/v1/messages` 已经是 canonical device
 - 模式注意：
   `quiet mode` 下 1P event logging 会被 privacy level 直接关闭
 
