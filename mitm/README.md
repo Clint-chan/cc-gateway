@@ -57,16 +57,32 @@ This means:
 
 ## Current Recommended Test Pattern
 
+### quiet mode
+
+1. Keep the workstation proxy on `127.0.0.1:10808`
+2. Run gateway tests with:
+   - `ANTHROPIC_BASE_URL=https://localhost:8443`
+   - `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`
+   - `CLAUDE_CODE_OAUTH_TOKEN=gateway-managed`
+   - `ANTHROPIC_CUSTOM_HEADERS=x-api-key: <token>`
+
+This mode is good for actual client usage, but it intentionally suppresses telemetry side channels.
+
+### alignment mode
+
 1. Keep the workstation proxy on `127.0.0.1:10808`
 2. Run direct CLI with:
    - `HTTP_PROXY`
    - `HTTPS_PROXY`
    - `ALL_PROXY`
-3. For gateway tests, use:
+3. Do not set `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`
+4. For gateway tests, use:
    - `ANTHROPIC_BASE_URL=https://localhost:8443`
    - `CLAUDE_CODE_OAUTH_TOKEN=gateway-managed`
    - `ANTHROPIC_CUSTOM_HEADERS=x-api-key: <token>`
-4. If MITM is needed again, capture to `.flows` first and parse afterwards
+5. If MITM is needed again, capture to `.flows` first and parse afterwards
+
+This mode is the only one suitable for validating `/api/eval/*` and `/api/event_logging/*`.
 
 ## Useful Commands
 
@@ -92,4 +108,16 @@ Compare the latest `/v1/messages` request specifically:
 
 ```powershell
 python mitm/diff_signals.py mitm/claude-cli.flows mitm/gateway.flows /v1/messages
+```
+
+Start a fresh direct capture session:
+
+```powershell
+.\scripts\capture-direct.ps1
+```
+
+Finalize a direct capture and print the latest signals:
+
+```powershell
+.\scripts\finalize-direct-capture.ps1
 ```

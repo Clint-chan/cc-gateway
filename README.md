@@ -101,6 +101,10 @@ curl -H "Authorization: Bearer <your-token>" http://localhost:8443/_verify
 
 Add these environment variables on each client machine. No browser login needed.
 
+### Quiet mode for real users
+
+This is the recommended production/tester mode. It suppresses nonessential side-channel traffic on purpose.
+
 ```bash
 # Route all Claude Code traffic through the gateway
 export ANTHROPIC_BASE_URL="https://gateway.your-domain.com:8443"
@@ -115,6 +119,12 @@ export CLAUDE_CODE_OAUTH_TOKEN="gateway-managed"
 # Use x-api-key here. Proxy-Authorization conflicts with Claude Code's own proxy agent on Windows.
 export ANTHROPIC_CUSTOM_HEADERS="x-api-key: YOUR_TOKEN"
 ```
+
+### Alignment mode for telemetry research
+
+For MITM capture and telemetry diff work, do not set `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`.
+
+Use this only on a research workstation behind a controlled proxy, because some first-party side channels still target `api.anthropic.com` directly.
 
 ### Simpler per-user setup with `.claude.json`
 
@@ -136,6 +146,8 @@ Example:
 Reference file:
 
 - [.claude.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.json.example)
+- [.claude.alignment.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.alignment.json.example)
+- [client-modes.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/client-modes.md)
 
 Why this works:
 
@@ -167,7 +179,7 @@ Then start Claude Code normally — `claude` — no login prompt, traffic routes
 | **Environment** | `env` object (40+ fields) | → entire object replaced |
 | **Process** | `constrainedMemory` (physical RAM) | → canonical value |
 | | `rss`, `heapTotal`, `heapUsed` | → randomized in realistic range |
-| **Headers** | `User-Agent` | → canonical CC version |
+| **Headers** | `User-Agent` | → preserve official shape or override per persona |
 | | `Authorization` | → real OAuth token (injected by gateway) |
 | | `x-anthropic-billing-header` | → canonical fingerprint |
 | **Prompt text** | `Platform`, `Shell`, `OS Version` | → canonical values |

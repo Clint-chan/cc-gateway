@@ -31,6 +31,11 @@
 1. direct CLI
 2. via gateway
 
+这里必须先声明采集模式：
+
+1. `quiet mode`
+2. `alignment mode`
+
 都必须固定：
 
 - 同一台机器
@@ -39,6 +44,12 @@
 - 同一最小测试提示词
 - 采集结束后必须先停止 `mitmdump`，再读取 `.flows`
   否则 Windows 下经常出现流量尚未 flush 到文件的问题
+
+如果目标是对齐 telemetry，而不是只验证主推理链：
+
+- 必须使用 `alignment mode`
+- 不要设置 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`
+- 否则 `GrowthBook` 和 `1P event logging` 根本不会发
 
 ### 第二步：抽取
 
@@ -78,7 +89,9 @@
 
 当前仓库里已经先落了最小本地版本：
 
+- [capture-direct.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/capture-direct.ps1)
 - [capture-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/capture-gateway.ps1)
+- [finalize-direct-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-direct-capture.ps1)
 - [finalize-gateway-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-gateway-capture.ps1)
 - [extract_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/extract_signals.py)
 - [diff_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/diff_signals.py)
@@ -118,10 +131,11 @@
 
 ## 当前阻塞点
 
-1. custom base URL 场景下，CLI 不一定会稳定发送全部 first-party 遥测通道
-2. 有些路径需要特定交互场景才会触发
-3. `cch` 这类 native attestation 无法靠 Node 网关自动补齐
-4. custom base URL 会让一部分 only-first-party 控制面路径直接失去资格，自动 diff 时必须区分“未发送”和“发送后不一致”
+1. 如果误用 `quiet mode`，GrowthBook 和 1P event logging 会被直接关闭
+2. custom base URL 场景下，CLI 不一定会稳定发送全部 first-party 遥测通道
+3. 有些路径需要特定交互场景才会触发
+4. `cch` 这类 native attestation 无法靠 Node 网关自动补齐
+5. custom base URL 会让一部分 only-first-party 控制面路径直接失去资格，自动 diff 时必须区分“未发送”和“发送后不一致”
 
 ## 结论
 
@@ -130,5 +144,6 @@
 - 自动抓
 - 自动抽
 - 自动比
+- 自动标记当前抓包属于 quiet 还是 alignment
 - 人工定策略
 - 再把策略落实到 gateway 和文档

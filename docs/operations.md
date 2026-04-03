@@ -204,6 +204,9 @@ Effect:
 - browser OAuth is skipped on the client
 - the gateway authenticates the client token and injects the real upstream OAuth token
 
+This is the recommended `quiet mode` for actual users.
+If you are doing telemetry alignment instead of end-user access, switch to [client-modes.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/client-modes.md) and remove `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`.
+
 ### Recommended tester distribution format
 
 For testers, prefer distributing a `.claude.json` file instead of asking them to export variables manually.
@@ -224,6 +227,7 @@ Example:
 Reference:
 
 - [.claude.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.json.example)
+- [.claude.alignment.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.alignment.json.example)
 
 Operational note:
 

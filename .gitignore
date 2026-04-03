@@ -12,3 +12,6 @@ certs/
 mitm/__pycache__/
 mitm/gateway.flows
 mitm/gateway.log
+mitm/direct.flows
+mitm/direct.log
+mitm/direct.err.log

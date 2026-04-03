@@ -276,9 +276,48 @@
   - 这并不等于所有遥测都关闭。
   - `GrowthBook` 和 `1P event logging` 在 custom base URL 场景下的完整行为还需要专项复抓验证。
 
+### A-013 quiet mode 与 alignment mode 分层
+
+- 日期：2026-04-03
+- 证据：
+  - [privacyLevel.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/privacyLevel.ts)
+  - [analytics/config.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/config.ts)
+  - [growthbook.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/growthbook.ts)
+  - [firstPartyEventLogger.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/firstPartyEventLogger.ts)
+  - [.claude.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.json.example)
+- 当前差异：
+  - 之前我们在 gateway 测试里稳定只看到 `/v1/messages`。
+  - 一开始容易把这个现象误判成：
+    - gateway 没处理 `/api/eval/*`
+    - gateway 没处理 `/api/event_logging/*`
+    - 或者 MITM 没抓到
+  - 实际上，测试配置里使用了 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`。
+  - 这会把 privacy level 提升到 `essential-traffic`，直接关闭 telemetry：
+    - GrowthBook
+    - 1P event logging
+    - 一批非必要控制面请求
+- 处理动作：
+  - 正式把客户端使用场景拆成两种模式：
+    - `quiet mode`
+    - `alignment mode`
+  - 保留 [.claude.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.json.example) 作为对外 quiet-mode 样例。
+  - 新增 [.claude.alignment.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.alignment.json.example) 作为研究模式样例。
+  - 新增 [client-modes.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/client-modes.md) 统一定义两种模式。
+- 回归验证：
+  - 参考源码已经确认：
+    - `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 会让 `isTelemetryDisabled()` 为真
+    - `GrowthBook` 依赖 `is1PEventLoggingEnabled()`
+    - `1P event logging` 依赖 `isAnalyticsDisabled()` 为假
+- 剩余风险：
+  - `alignment mode` 下，即使放开 telemetry，一部分 side channel 仍可能直接打向 `api.anthropic.com`，不会自动经过 gateway。
+  - 后续自动 diff 必须区分：
+    - quiet mode 的“本就不该发”
+    - alignment mode 的“应该发但没有抓到”
+
 ## 下一步优先级
 
-1. 重新抓取 direct CLI 与 gateway 上游流量，验证 A-003 到 A-006 的实际效果
+1. 在 `alignment mode` 下重新抓取 direct CLI 与 gateway 上游流量
 2. 逐项核对 `/v1/messages`、`/api/eval/*`、`/api/event_logging/*`
-3. 根据抓包差异继续补头部、body 和控制面请求
-4. 评估 persona 分组策略，而不是把所有账号都压成同一个静态模板
+3. 把“直连 `api.anthropic.com` 的 side channel”单独建模，不再误算成 gateway 漏改写
+4. 根据抓包差异继续补头部、body 和控制面请求
+5. 评估 persona 分组策略，而不是把所有账号都压成同一个静态模板

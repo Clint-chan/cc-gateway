@@ -27,6 +27,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [auth-proxy-debugging.md](./auth-proxy-debugging.md)
   Detailed record of the Windows auth/proxy debugging path, MITM evidence, final working client setup, and Docker follow-up notes.
 
+- [client-modes.md](./client-modes.md)
+  Separation between quiet production mode and alignment research mode for Claude Code clients.
+
 - [packet-alignment-log.md](./packet-alignment-log.md)
   Single running log for every telemetry, header, and body alignment fix against captured first-party Claude Code traffic.
 
@@ -39,7 +42,10 @@ The goal is to keep product direction, data model, API shape, and operational st
 ### Client Onboarding
 
 - [.claude.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.json.example)
-  Minimal example for pointing Claude Code directly at the gateway with a distributed client token.
+  Quiet-mode example for pointing Claude Code directly at the gateway with a distributed client token.
+
+- [.claude.alignment.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.alignment.json.example)
+  Alignment-mode example for telemetry capture and MITM research.
 
 ## Suggested Update Rules
 

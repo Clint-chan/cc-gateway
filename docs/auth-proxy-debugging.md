@@ -28,6 +28,9 @@ $env:ANTHROPIC_CUSTOM_HEADERS='x-api-key: YOUR_CLIENT_TOKEN'
 $env:NODE_TLS_REJECT_UNAUTHORIZED='0'
 ```
 
+This is the known-good `quiet mode` for local gateway usage.
+It is correct for operator and tester onboarding, but it is not suitable for telemetry alignment captures because it suppresses nonessential traffic by design.
+
 For tester distribution, a `.claude.json` file is the cleaner path:
 
 ```json
@@ -42,6 +45,8 @@ For tester distribution, a `.claude.json` file is the cleaner path:
 ```
 
 This avoids making testers type shell-specific environment commands.
+
+For telemetry alignment work, use [client-modes.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/client-modes.md) and switch to `alignment mode`.
 
 ### Gateway side
 

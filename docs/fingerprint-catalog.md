@@ -45,6 +45,28 @@
 - 总览文章：
   [reference/README.md](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/README.md)
 
+## 使用模式
+
+### quiet mode
+
+- 目标：
+  给测试者和生产使用，尽量减少旁路流量
+- 关键开关：
+  `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`
+- 结果：
+  GrowthBook 和 1P event logging 都不会发
+
+### alignment mode
+
+- 目标：
+  专门用于遥测研究和 MITM 对齐
+- 关键要求：
+  不要设置 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`
+- 结果：
+  遥测面会重新暴露，但其中一部分仍可能直连 `api.anthropic.com`
+
+如果没有先声明当前抓包属于哪种模式，这份目录里的很多结论都会被误读。
+
 ## 信号面目录
 
 ### 1. 请求头层
@@ -173,6 +195,8 @@
   - `accountUUID`
   - `subscriptionType`
   - `rateLimitTier`
+- 模式注意：
+  `quiet mode` 下这一路本来就不会发，只有 `alignment mode` 才适合验证
 - 后续更新方式：
   需要专门复抓一轮带 eval 的请求，核对 gateway 实际出站体
 
@@ -219,6 +243,8 @@
   - `cpuPercent`
 - 当前未完全验证：
   自定义 base URL 场景下，CLI 本身可能不再发送这一路，因此需要更专门的触发方式来复抓
+- 模式注意：
+  `quiet mode` 下 1P event logging 会被 privacy level 直接关闭
 
 ### 5. 控制面与功能开关
 
@@ -264,12 +290,27 @@
 - 风险说明：
   后续看到“某些路由没发出来”时，不能默认当作抓包失败或 gateway 改坏了
 
+#### 5.5 quiet mode gating
+
+- 作用：
+  `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 会主动压掉 telemetry 和多条非必要控制面请求
+- 参考位置：
+  - [privacyLevel.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/privacyLevel.ts)
+  - [analytics/config.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/config.ts)
+  - [growthbook.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/growthbook.ts)
+  - [firstPartyEventLogger.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/firstPartyEventLogger.ts)
+- 当前结论：
+  这不是“请求没抓到”，而是客户端被显式配置成不发
+- 风险说明：
+  自动 diff 必须把 quiet mode 和 alignment mode 分开跑
+
 ## 快速跟进最新指纹的方法
 
 ### 方法一：直接抓官方客户端
 
 1. 用本机 direct CLI 跑一次最小请求
 2. 抓 `claude-cli.flows` 和 `claude-cli.log`
+3. 如果要看 telemetry，确保当前是 `alignment mode`
 3. 看是否新增：
    - 新 header
    - 新 beta
@@ -281,6 +322,7 @@
 1. 起抓包专用 gateway
 2. 让 gateway 的 `network.proxy_url` 指向 mitm
 3. 让 mitm 上游再走 `10808`
+4. 如果要验证 eval / 1P event logging，客户端不能开 quiet mode
 4. 对比：
    - `claude-cli.log`
    - `gateway.log`

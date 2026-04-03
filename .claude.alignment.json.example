@@ -1,0 +1,7 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://your-gateway-host:8443",
+    "ANTHROPIC_AUTH_TOKEN": "your-gateway-client-token"
+  },
+  "hasCompletedOnboarding": true
+}
