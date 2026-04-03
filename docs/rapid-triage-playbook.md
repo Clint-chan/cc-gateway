@@ -126,6 +126,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\finalize-dual-via-gateway.ps1
 - [fingerprint-catalog.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/fingerprint-catalog.md)
 - [reference auth.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/auth.ts)
 
+如果差异正好出现在 `claude remote-control`，再补看：
+
+- [remote-control-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/remote-control-gating.md)
+
 ### 情况 C：alignment 有，quiet 没有
 
 优先怀疑：
@@ -210,6 +214,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\finalize-dual-via-gateway.ps1
 如果结论改变了工作流，也要同步：
 
 - [trusted-capture-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/trusted-capture-workflow.md)
+
+### remote-control 错误文本速判
+
+- `requires a claude.ai subscription`
+  先看 auth mode，不要查代理
+- `requires a full-scope login token`
+  先看 `CLAUDE_CODE_OAUTH_TOKEN` / setup-token，不要查 gateway rewrite
+- `not yet enabled for your account`
+  先看 bridge entitlement gate，不要先怀疑 MITM
 
 ## 推荐指令模板
 

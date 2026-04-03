@@ -56,6 +56,34 @@
   - 如果未来 Claude Code 改写了 env token 的 subscription 语义，这个结论需要重新复核
   - 目前这条结论只冻结到当前版本和当前接入模型，不代表 future subscriber-managed gateway 一定无法恢复 Grove 面
 
+### A-000a Remote Control gating 冻结
+
+- 日期：2026-04-03
+- 证据：
+  - [cli.tsx](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/entrypoints/cli.tsx)
+  - [bridgeEnabled.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/bridge/bridgeEnabled.ts)
+  - [remote-control-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/remote-control-gating.md)
+- 当前差异：
+  - 之前 `remote-control` 抓不到 `/api/eval/*` 时，还存在“是不是代理没带上”的不确定性
+  - 这会把 bridge entitlement 问题和 telemetry probe 问题混在一起
+- 处理动作：
+  - 冻结了 `remote-control` 的真实 gating 顺序：
+    - OAuth access token
+    - `isClaudeAISubscriber()`
+    - `hasProfileScope()`
+    - `organizationUuid`
+    - `tengu_ccr_bridge`
+  - 新增：
+    - [inspect-bridge-gating-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-bridge-gating-state.ps1)
+  - 把 `remote-control` 从通用 eval probe 降级成 bridge entitlement probe
+- 回归验证：
+  - local direct subscriber：`Remote Control is not yet enabled for your account.`
+  - via-gateway `managed-oauth`：`requires a full-scope login token`
+  - via-gateway `external-auth-token`：`requires a claude.ai subscription`
+- 剩余风险：
+  - 当前脚本里的 bridge gate 仍以本地缓存为近似判断；最终结论仍以真实命令输出为准
+  - 如果 upstream 调整 bridge gating 顺序，这份结论需要重跑
+
 ### A-001 显式代理链路
 
 - 日期：2026-04-03

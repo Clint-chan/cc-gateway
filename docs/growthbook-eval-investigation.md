@@ -106,9 +106,11 @@
 
 解释：
 
-- 这条命令确实会走 `checkGate_CACHED_OR_BLOCKING('tengu_ccr_bridge')`
-- 但当前 cwd 没有建立 trust，GrowthBook 很可能在 auth 之前就被短路
-- 所以“blocking gate 命令”不等于“必然能抓到 remote eval”
+- `claude remote-control` 确实会走 bridge fast-path，不是错误命令路径
+- 但它不是通用 `/api/eval/*` probe，而是 bridge entitlement probe
+- 当前 direct subscriber 会话里，它已经被本机实测确认会直接返回：
+  `Remote Control is not yet enabled for your account.`
+- 所以它当前更像 bridge gate 是否放量的检查入口，而不是远程 eval 是否存在的总开关
 
 ### 3. trusted workspace 下的 `claude -p "hello"`
 
@@ -139,10 +141,10 @@
 解释：
 
 - 现在已经不能再把这件事归因成“系统代理没接上”，因为同一 trusted workspace 下的 `headless-hello` 已经成功抓到了 `/api/eval/*`
-- 更合理的解释是：
-  - `remote-control` 的 bridge/entitlement 检查在更早阶段就返回了
-  - 或者当前账号/命令路径没有进入可观测的 remote eval 发包阶段
-- 所以 `remote-control` 现在应被视为“命令特定的 probe”，而不是 `/api/eval/*` 的唯一真相来源
+- 更准确的解释已经冻结为：
+  - `remote-control` 有自己的 bridge gating 链
+  - 不同 auth mode 会在 subscriber / profile scope / organization / feature gate 的不同层提前结束
+- 所以 `remote-control` 现在应被视为 bridge entitlement probe，而不是 `/api/eval/*` 的唯一真相来源
 
 ## 当前结论
 
@@ -153,7 +155,8 @@
    - 当前 cwd 的 trust 状态
    - 采样环境是否隔离出独立 project key
 3. `remote-control` 当前抓不到流量，已经不能再解释成“代理没带上”；它更像是 bridge/entitlement 特定路径的问题
-4. 当前最需要先区分的不是“gateway 有没有改写”，而是：
+4. `remote-control` 不适合作为通用 `/api/eval/*` probe；如果目标是看 telemetry / eval，优先用 trusted `headless-hello`
+5. 当前最需要先区分的不是“gateway 有没有改写”，而是：
    - 哪个 transport surface 真正会发
    - 哪个 probe 只是更早被命令逻辑短路了
 
@@ -189,7 +192,7 @@
 - 优点：
   理论上比 `-p` 更容易把 remote eval 拉出来
 - 缺点：
-  如果当前 cwd 没 trust，仍然可能拿不到 auth headers
+  实际上命令本身可能先被 bridge entitlement 链短路，不能再当作通用 eval probe
 
 #### 路径 C：长生命周期 interactive 会话
 
@@ -213,6 +216,8 @@
    - trusted direct `headless-hello`
    - trusted via-gateway `headless-hello`
    看 `/api/eval/*` 和控制面 side channel 哪些还能经系统代理统一出口
+7. 如果目标是 bridge / remote-control，自成一条独立研究线，先看：
+   - [remote-control-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/remote-control-gating.md)
 
 ## 关联文档
 
@@ -220,3 +225,4 @@
 - [fingerprint-catalog.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/fingerprint-catalog.md)
 - [transport-surface-map.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/transport-surface-map.md)
 - [telemetry-automation-plan.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/telemetry-automation-plan.md)
+- [remote-control-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/remote-control-gating.md)

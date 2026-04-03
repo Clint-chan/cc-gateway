@@ -47,7 +47,7 @@
 
 ### 2. Transport / Telemetry 事实层
 
-完成度：`88%`
+完成度：`89%`
 
 已完成：
 
@@ -68,17 +68,18 @@
 - 已确认 `NO_PROXY=localhost,127.0.0.1` 是双通道 workflow 的硬条件
 - 已确认 `auth mode` 是独立于 `traffic mode` 的第二个高优先级变量
 - 已确认 Grove / account settings 在当前 via-gateway 两种 auth mode 下属于 `auth-model-suppressed`，不是简单的 “not-observed”
+- 已确认 `remote-control` 当前应视为 bridge entitlement probe，而不是通用 `/api/eval/*` probe
 
 未完成：
 
 - trusted `via-gateway` 对照还没把 `event_logging` 的最小稳定触发条件完全收干净
 - `/api/eval/*` 在 gateway 场景下已经重新确认为 direct side-channel，但相关字段矩阵还没完全冻结
 - `event_logging` 在 trusted workflow 下的时序和 probe 阈值还没彻底验掉
-- `remote-control` 为什么会在更早阶段结束，还没拆完
+- `remote-control` 的命令前置 gating 已拆清，但 bridge feature gate 本身仍然没有放量
 
 ### 3. 方法论与可维护性
 
-完成度：`95%`
+完成度：`96%`
 
 已完成：
 

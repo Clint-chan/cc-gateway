@@ -44,6 +44,8 @@
 - 重要边界：
   这条模式保留的是 first-party OAuth 叙事，不等于完整 local subscriber 会话。
   参考源码里，`CLAUDE_CODE_OAUTH_TOKEN` 会被视为 inference-only env token，`subscriptionType = null`，所以某些要求 `isConsumerSubscriber()` 的控制面不会再出现。
+- remote-control 补充：
+  这条模式也不能满足 bridge 的 full-scope login 要求；`claude remote-control` 会直接报 profile scope 错误
 
 ### external-auth-token
 
@@ -60,6 +62,8 @@
   - OAuth account 信息可见性
   - GrowthBook attributes
   - 一部分 first-party side channel 的触发条件
+- remote-control 补充：
+  这条模式下 `claude remote-control` 会直接报 `requires a claude.ai subscription`
 
 ## 组合一：quiet + managed-oauth
 
@@ -188,6 +192,7 @@
 - [user.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/user.ts)
 - [growthbook.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/growthbook.ts)
 - [grove-control-plane-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/grove-control-plane-gating.md)
+- [remote-control-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/remote-control-gating.md)
 
 ### custom base URL 还会裁掉一部分 first-party 控制面
 

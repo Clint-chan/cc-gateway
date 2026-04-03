@@ -39,6 +39,7 @@
 - [finalize-direct-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-direct-capture.ps1)
 - [inspect-growthbook-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-growthbook-state.ps1)
 - [inspect-auth-gating-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-auth-gating-state.ps1)
+- [inspect-bridge-gating-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-bridge-gating-state.ps1)
 - [clear-grove-cache.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/clear-grove-cache.ps1)
 - [prepare-trusted-capture-workspace.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/prepare-trusted-capture-workspace.ps1)
 - [probe-growthbook-eval-direct.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-growthbook-eval-direct.ps1)
@@ -263,6 +264,25 @@
   - [grove-control-plane-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/grove-control-plane-gating.md)
 - 后续更新方式：
   以后 Grove 再次出现或消失时，先跑 auth gating 检查，再决定是否做冷缓存复抓
+
+#### 3.3 Remote Control / bridge gating
+
+- 作用：
+  区分 `claude remote-control` 是卡在 subscriber、profile scope、organization 还是 feature gate
+- 真实来源：
+  [cli.tsx](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/entrypoints/cli.tsx)
+  [bridgeEnabled.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/bridge/bridgeEnabled.ts)
+- 当前策略：
+  不再把 `remote-control` 当作通用 `/api/eval/*` probe，而是单独作为 bridge entitlement probe
+- 快速检查：
+  - [inspect-bridge-gating-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-bridge-gating-state.ps1)
+  - [inspect-auth-gating-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-auth-gating-state.ps1)
+- 详细说明：
+  - [remote-control-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/remote-control-gating.md)
+- 当前结论：
+  - local direct subscriber 会话当前会卡在 bridge feature gate
+  - `managed-oauth` 会卡在 full-scope login 要求
+  - `external-auth-token` 会卡在 claude.ai subscription 要求
 
 ### 4. 1P event logging 层
 

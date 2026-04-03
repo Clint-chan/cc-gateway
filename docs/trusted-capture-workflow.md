@@ -143,11 +143,15 @@ Select-String -Path mitm\direct.log -Pattern '/api/eval/|v1/mcp_servers|claude_c
 - 路径：
   `claude remote-control`
 - 目的：
-  强制走 `checkGate_CACHED_OR_BLOCKING('tengu_ccr_bridge')`
+  单独检查 bridge entitlement / remote-control gating
 - 价值：
-  这是当前最接近“non-headless blocking gate”的现成探针
+  能快速区分：
+  - subscriber 不成立
+  - profile scope 不成立
+  - organization 上下文不成立
+  - bridge feature gate 不成立
 - 注意：
-  如果 cwd 不 trusted，这条 probe 仍然可能拿不到 GrowthBook auth
+  这不是通用 `/api/eval/*` probe
 
 ### probe B: `headless-hello`
 
@@ -179,7 +183,7 @@ Select-String -Path mitm\direct.log -Pattern '/api/eval/|v1/mcp_servers|claude_c
 这意味着：
 
 - trusted workspace + `headless-hello` 已经足够作为 `/api/eval/*` 的标准 direct probe
-- `remote-control` 当前更适合被当作“bridge/entitlement 专项探针”，而不是 `/api/eval/*` 的唯一入口
+- `remote-control` 当前更适合被当作 bridge/entitlement 专项探针，而不是 `/api/eval/*` 的唯一入口
 
 ## via-gateway 双通道对照
 
@@ -256,6 +260,7 @@ python mitm\summarize_control_plane_matrix.py --mode-label managed-oauth-combine
 后面如果这条工作流有变化，必须同步更新：
 
 - [growthbook-eval-investigation.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/growthbook-eval-investigation.md)
+- [remote-control-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/remote-control-gating.md)
 - [packet-alignment-log.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/packet-alignment-log.md)
 - [telemetry-automation-plan.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/telemetry-automation-plan.md)
 

@@ -48,6 +48,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [grove-control-plane-gating.md](./grove-control-plane-gating.md)
   Frozen explanation for why Grove control-plane surfaces disappear under current via-gateway auth models, and how to distinguish auth suppression from capture failure.
 
+- [remote-control-gating.md](./remote-control-gating.md)
+  Frozen explanation for why `claude remote-control` exits early under different auth identities, and how to map its error text back to subscriber, profile, organization, or bridge-gate causes.
+
 - [packet-alignment-log.md](./packet-alignment-log.md)
   Single running log for every telemetry, header, and body alignment fix against captured first-party Claude Code traffic.
 

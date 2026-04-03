@@ -266,10 +266,15 @@ CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 - 但要注意：
   `CLAUDE_CODE_OAUTH_TOKEN` 在客户端内部仍然会被视为 inference-only env token，`subscriptionType = null`。
   所以它不是完整的 local subscriber 会话，像 Grove 这类要求 `isConsumerSubscriber()` 的控制面仍会被 auth model 裁掉。
+- 同样地：
+  `claude remote-control` 也会在更早的 bridge gating 链里被裁掉：
+  - `managed-oauth` 卡在 full-scope login 要求
+  - `external-auth-token` 卡在 claude.ai subscription 要求
 
 auth-mode-sensitive 的具体控制面矩阵，统一看：
 
 - [auth-mode-control-plane-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/auth-mode-control-plane-matrix.md)
+- [remote-control-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/remote-control-gating.md)
 
 ## 对我们项目的含义
 

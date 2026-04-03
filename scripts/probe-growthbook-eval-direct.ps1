@@ -27,11 +27,19 @@ Remove-Item Env:NODE_TLS_REJECT_UNAUTHORIZED -ErrorAction SilentlyContinue
 Push-Location $resolvedWorkspace
 try {
   Write-Host ""
-  Write-Host "GrowthBook eval probe"
-  Write-Host "====================="
+  Write-Host "Research probe"
+  Write-Host "=============="
   Write-Host "workspace_path: $resolvedWorkspace"
   Write-Host "probe: $Probe"
   Write-Host "mitm_port: $MitmPort"
+  switch ($Probe) {
+    "remote-control" {
+      Write-Host "probe_type: bridge entitlement probe"
+    }
+    "headless-hello" {
+      Write-Host "probe_type: generic telemetry probe"
+    }
+  }
   Write-Host ""
 
   switch ($Probe) {
