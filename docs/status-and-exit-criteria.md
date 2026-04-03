@@ -47,7 +47,7 @@
 
 ### 2. Transport / Telemetry 事实层
 
-完成度：`70%`
+完成度：`78%`
 
 已完成：
 
@@ -57,17 +57,22 @@
 - `/api/eval/*` 已在 trusted workspace 的 `headless-hello` 下重新实抓到
 - `bootstrap / grove / account settings / MCP control plane` 已在 trusted direct 场景下抓到
 - `1P event logging` 已确认在 `alignment mode` 下会直连 first-party
+- trusted `via-gateway` 双通道 workflow 已落地并跑通
+- 已确认 `via-gateway` 最小请求里：
+  - gateway 上游稳定看到 `/v1/messages`
+  - direct side-channel 稳定看到 `/v1/mcp_servers`、`/api/claude_cli/bootstrap`、`/api/claude_code_penguin_mode`、`/mcp-registry`
+- 已确认 `NO_PROXY=localhost,127.0.0.1` 是双通道 workflow 的硬条件
 
 未完成：
 
-- trusted `via-gateway` 对照还没跑完
+- trusted `via-gateway` 对照还没把 `/api/eval/*` 与 `/api/event_logging/*` 收干净
 - `/api/eval/*` 在 gateway 场景下的 ownership 和改写效果还没定性
 - `event_logging` 在 trusted workflow 下的时序和 gating 还没彻底验掉
 - `remote-control` 为什么会在更早阶段结束，还没拆完
 
 ### 3. 方法论与可维护性
 
-完成度：`85%`
+完成度：`90%`
 
 已完成：
 
@@ -76,8 +81,10 @@
 - 有逐次修复日志
 - 有 GrowthBook 专项调查文档
 - 有 trusted capture workflow
+- 有 trusted `via-gateway` 双通道 workflow
 - 有半自动化路线图
 - 有仓库布局规范
+- 有 URL 过滤提取和双通道 capture 脚本
 
 未完成：
 
@@ -206,6 +213,13 @@
 - 复抓 `/api/eval/*` 和控制面 side channel
 - 直接回答“这些链路在 gateway 场景下到底怎么走”
 
+当前进展：
+
+- 主链与一部分 direct side channel 已拆开
+- 当前剩余重点只剩：
+  - `/api/eval/*`
+  - `/api/event_logging/*`
+
 ### T2. event logging 的 trusted 时序复抓
 
 目标：
@@ -247,7 +261,7 @@
 
 ### 正常情况
 
-`4-6` 个工作轮次，约 `2-4` 天的连续推进
+`3-5` 个工作轮次，约 `1-3` 天的连续推进
 
 这是当前最现实的估计。
 
@@ -285,7 +299,7 @@
 换句话说：
 
 - 不是从 0 到 1
-- 是从 `0.7` 到 `1.0`
+- 是从 `0.78` 到 `1.0`
 
 这个阶段最重要的不是继续铺功能，而是：
 
