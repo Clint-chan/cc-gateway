@@ -106,6 +106,7 @@
 - 有 `probe-type` 矩阵工作流和结构化结果
 - 有 `/api/eval/*` 字段目标清单、提取脚本和结构化基线结果
 - 有最小遥测维护报告生成器
+- 有最小外层维护脚本入口
 - 有半自动化路线图
 - 有仓库布局规范
 - 有 URL 过滤提取和双通道 capture 脚本
@@ -137,7 +138,33 @@
 - 代理池
 - 控制面实现
 
+### 5. 源码理解与产品成熟度
+
+完成度：`分层可用，但不求伪完整`
+
+已完成：
+
+- 对 Claude Code 与当前 gateway 真正相关的 transport/auth/telemetry 面已经形成“够用且可持续跟进”的理解
+- 对当前本项目 runtime 的主路径已经理解到足以继续重构和演进
+- 对项目背景的理解已经足够支撑当前架构决策
+- 产品成熟度已经能支持内部测试和对外小范围试用
+
+未完成：
+
+- Claude Code 全量源码并未也不需要在当前阶段“彻底读完”
+- 平台层源码还不存在，因此“完整吃透未来平台代码”本身不是当前任务
+- 产品成熟度仍停留在 `gateway beta / platform alpha`
+
 ## 当前阶段最重要的结论
+
+当前架构优先级顺序已经冻结在：
+
+1. 维护环路自动化
+2. 指纹资产层抽离
+3. runtime 模块边界整理
+4. 再进入 control-plane substrate
+
+参考：[architecture-priority-map.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/architecture-priority-map.md)
 
 ### 结论一：quiet mode 已经可以作为对外默认模式
 

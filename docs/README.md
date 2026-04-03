@@ -19,6 +19,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [status-and-exit-criteria.md](./status-and-exit-criteria.md)
   Current phase assessment, v1 exit criteria for transport/telemetry work, and an estimated timeline to close this layer.
 
+- [architecture-priority-map.md](./architecture-priority-map.md)
+  Architecture-level progress review and the frozen priority order for the next stage.
+
 - [data-model.md](./data-model.md)
   Core entities for accounts, fingerprints, proxies, clients, policies, sessions, and audit records.
 

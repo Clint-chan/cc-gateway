@@ -129,6 +129,12 @@
 python mitm/render_telemetry_report.py --output artifacts/reports/telemetry-YYYYMMDD.md
 ```
 
+当前外层维护入口：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\ops\run-telemetry-maintenance.ps1
+```
+
 ## 自动任务触发条件
 
 推荐两种触发：

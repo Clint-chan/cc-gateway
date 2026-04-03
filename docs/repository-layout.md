@@ -113,6 +113,10 @@ scripts/
 
 现阶段还没强制迁移，但新增脚本应尽量按这个方向命名和分类。
 
+当前已经开始落到这个方向：
+
+- `scripts/ops/run-telemetry-maintenance.ps1`
+
 ### `tests/`
 
 只放自动化测试。
