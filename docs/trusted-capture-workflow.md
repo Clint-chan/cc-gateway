@@ -185,6 +185,7 @@ Select-String -Path mitm\direct.log -Pattern '/api/eval/|v1/mcp_servers|claude_c
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\capture-dual-via-gateway.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\probe-trusted-via-gateway.ps1 -EnableDirectMitm -AuthMode managed-oauth
+powershell -ExecutionPolicy Bypass -File .\scripts\probe-trusted-via-gateway.ps1 -EnableDirectMitm -AuthMode managed-oauth -RepeatCount 2
 powershell -ExecutionPolicy Bypass -File .\scripts\finalize-dual-via-gateway.ps1 -StopGateway
 ```
 
@@ -220,15 +221,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\finalize-dual-via-gateway.ps1
 - direct side-channel MITM 看到：
   - `POST /api/eval/sdk-*`
   - `GET /mcp-registry/v0/servers`
-- 当前这轮没有看到：
-  - `/api/event_logging/*`
+- 如果使用 `-RepeatCount 2` 再跑一次最小 probe，direct side-channel 还会出现：
+  - `POST /api/event_logging/v2/batch`
 
 这说明：
 
 - 最小 via-gateway 请求里，主链和 side channel 已经可以被明确拆开
 - `ANTHROPIC_AUTH_TOKEN` 与 `CLAUDE_CODE_OAUTH_TOKEN` 不只是“不同写法”，而是会切换客户端的 subscriber / OAuth 叙事
 - `/api/eval/*` 是否出现，已经确认会受 auth mode 直接影响
-- `/api/event_logging/*` 仍然受额外 gating 或时序影响，不能因为某一轮缺失就认定为彻底不存在
+- `/api/event_logging/*` 在 `managed-oauth` 下不是完全不发，而是单次最小 probe 里更容易被时序掩盖；重复 probe 后已确认它仍然是 direct side-channel
 
 ## 维护规则
 

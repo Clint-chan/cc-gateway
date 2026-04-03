@@ -283,6 +283,8 @@
   [gateway.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/gateway.log) 已确认：
   - `/api/event_logging/v2/batch` 仍带真实 `win32` 环境和真实 `device_id`
   - 同一次抓包里的 `/v1/messages` 已经是 canonical device
+- via-gateway 补充：
+  在 trusted `via-gateway` 的 `managed-oauth` 路径下，`-RepeatCount 2` 已重新抓到 `/api/event_logging/v2/batch`
 - 模式注意：
   `quiet mode` 下 1P event logging 会被 privacy level 直接关闭
 

@@ -41,12 +41,20 @@ Write-Host "Direct side-channel signals (/v1/messages):"
 python mitm/extract_signals.py $DirectFlowPath 20 /v1/messages
 
 Write-Host ""
+Write-Host "Direct side-channel signals (/api/event_logging/):"
+python mitm/extract_signals.py $DirectFlowPath 20 /api/event_logging/
+
+Write-Host ""
 Write-Host "Gateway-upstream signals (/api/eval/):"
 python mitm/extract_signals.py $GatewayFlowPath 20 /api/eval/
 
 Write-Host ""
 Write-Host "Gateway-upstream signals (/v1/messages):"
 python mitm/extract_signals.py $GatewayFlowPath 20 /v1/messages
+
+Write-Host ""
+Write-Host "Gateway-upstream signals (/api/event_logging/):"
+python mitm/extract_signals.py $GatewayFlowPath 20 /api/event_logging/
 
 Write-Host ""
 Write-Host "Gateway-upstream control-plane hits:"

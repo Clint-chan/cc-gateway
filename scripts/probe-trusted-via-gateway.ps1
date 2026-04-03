@@ -7,6 +7,8 @@ param(
   [string]$GatewayManagedOAuthToken = "gateway-managed",
   [switch]$EnableDirectMitm,
   [int]$DirectMitmPort = 18081,
+  [int]$RepeatCount = 1,
+  [int]$DelayMilliseconds = 250,
   [ValidateSet("hello")]
   [string]$Probe = "hello"
 )
@@ -58,6 +60,7 @@ try {
   Write-Host "workspace_path: $resolvedWorkspace"
   Write-Host "gateway_url: $GatewayUrl"
   Write-Host "auth_mode: $AuthMode"
+  Write-Host "repeat_count: $RepeatCount"
   Write-Host "direct_mitm_enabled: $EnableDirectMitm"
   if ($EnableDirectMitm) {
     Write-Host "direct_mitm_port: $DirectMitmPort"
@@ -65,9 +68,19 @@ try {
   }
   Write-Host ""
 
-  switch ($Probe) {
-    "hello" {
-      & claude -p "hello"
+  for ($i = 1; $i -le $RepeatCount; $i++) {
+    if ($RepeatCount -gt 1) {
+      Write-Host "probe_run: $i/$RepeatCount"
+    }
+
+    switch ($Probe) {
+      "hello" {
+        & claude -p "hello"
+      }
+    }
+
+    if ($i -lt $RepeatCount -and $DelayMilliseconds -gt 0) {
+      Start-Sleep -Milliseconds $DelayMilliseconds
     }
   }
 }

@@ -115,9 +115,11 @@
 - 最新实抓：
   在 `alignment mode + custom base URL + headless` 的当前最小请求里，这一路仍然会发，而且会绕过 gateway，直接暴露真实本机环境
 - 当前 via-gateway 补充结论：
-  在 trusted workspace + custom base URL 的本轮双通道最小请求里，没有再次出现
+  在 trusted workspace + custom base URL 的双通道最小请求里：
+  - `managed-oauth + RepeatCount=2` 已重新看到 `/api/event_logging/v2/batch`
+  - 仍然是 direct side-channel，不经过 gateway 上游
 - 备注：
-  说明它至少还受 mode、probe 时序或其他 gating 影响；不能因为单轮缺失就把它从风险面移除
+  说明它至少还受 mode 和 probe 时序影响；不能因为单轮缺失就把它从风险面移除
 
 #### 2.3 metrics opt-out
 

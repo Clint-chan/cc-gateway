@@ -563,6 +563,44 @@
   - `event_logging` 在 `managed-oauth` 下的 trusted `via-gateway` 时序还没完全跑出来
   - bootstrap / penguin / MCP 等 side channel 还要继续做 auth-mode-sensitive 矩阵整理
 
+### A-022 `event_logging` 在 `managed-oauth` 下仍然是 direct side-channel
+
+- 日期：2026-04-03
+- 证据：
+  - [probe-trusted-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-trusted-via-gateway.ps1)
+  - [finalize-dual-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-dual-via-gateway.ps1)
+  - [dual-direct.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/dual-direct.log)
+  - [dual-direct.flows](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/dual-direct.flows)
+- 当前差异：
+  - 之前在 `managed-oauth` 下的单次最小 via-gateway probe 里，我们看到了 `/api/eval/sdk-*`，但没有看到 `/api/event_logging/*`
+  - 这容易被误判成：
+    - `managed-oauth` 不发 event logging
+    - 或者 event logging 只在 external-auth-token 下出现
+  - 实际复抓后已经确认：
+    - 在 `managed-oauth` 下，把 trusted via-gateway probe 跑两次
+    - direct side-channel 会重新出现 `POST /api/event_logging/v2/batch`
+    - gateway upstream 仍然只看到 `/v1/messages`
+- 处理动作：
+  - 给 [probe-trusted-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-trusted-via-gateway.ps1) 增加：
+    - `RepeatCount`
+    - `DelayMilliseconds`
+  - 给 [finalize-dual-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-dual-via-gateway.ps1) 增加 `/api/event_logging/` 摘要输出
+  - 给 [capture-dual-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/capture-dual-via-gateway.ps1) 增加重复 probe 的推荐命令
+- 回归验证：
+  - `managed-oauth + RepeatCount=2` 下，direct side-channel 已提取到：
+    - `event.entrypoint = sdk-cli`
+    - `event.client_type = sdk-cli`
+    - `event.device_id = 388c...`
+    - `event.email = bodedreyer@gmail.com`
+    - `event.env.platform = win32`
+  - 同一轮 gateway upstream 仍未出现 `/api/event_logging/*`
+- 剩余风险：
+  - 当前只确认了“重复 probe 后会出现”
+  - 还没冻结最小稳定触发条件，比如：
+    - 单次请求是否偶发就够
+    - 重复次数阈值
+    - 是否和 query 间隔有关
+
 ## 下一步优先级
 
 1. 专项触发 `/api/eval/*`，验证它到底是 headless 退出问题还是场景问题
