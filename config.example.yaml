@@ -15,6 +15,10 @@ upstream:
 
 # Optional explicit proxy for upstream API and OAuth refresh.
 # If omitted, gateway falls back to HTTPS_PROXY / HTTP_PROXY / ALL_PROXY.
+# For Docker/Compose on Docker Desktop, prefer host.docker.internal instead of
+# 127.0.0.1 because container loopback is not the Windows host loopback.
+# The provided docker-compose.yml already adds:
+#   host.docker.internal:host-gateway
 network:
   proxy_url: http://127.0.0.1:10808
 

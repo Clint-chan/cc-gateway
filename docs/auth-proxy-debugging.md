@@ -155,15 +155,23 @@ These changes came from the captured direct CLI reference in [claude-cli.log](/C
 
 This project should keep Docker as a first-class deployment target.
 
-When Docker work resumes, verify these explicitly:
+Current Docker backfill has now frozen these findings:
 
-1. container can resolve and reach the configured proxy endpoint
-2. `config.yaml` is mounted with `network.proxy_url`
-3. startup logs confirm OAuth is valid under container networking
-4. client requests through the container still use `x-api-key` auth
-5. if self-signed TLS is used for local Docker tests, client certificate trust behavior is documented
+1. runtime containers must not use host loopback in `config.yaml`
+   use:
+   `network.proxy_url: http://host.docker.internal:10808`
 
-Recommended next Docker step:
+2. Compose must provide:
+   `host.docker.internal:host-gateway`
 
-- update `docker-compose.yml` and docs so `config.yaml` remains the single source of truth for proxy routing
-- avoid relying on ad hoc Docker Desktop proxy settings alone
+3. Docker daemon base-image pulls are a separate prerequisite
+   if Docker Desktop itself cannot reach the configured proxy, `docker compose build` will fail before repository code is even involved
+
+4. this repository now includes a repeatable probe:
+   [inspect-docker-proxy-path.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-docker-proxy-path.ps1)
+
+This means future Docker debugging should start by separating:
+
+- Docker daemon proxy reachability
+- container runtime proxy reachability
+- gateway runtime behavior after the container has already started

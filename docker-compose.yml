@@ -3,9 +3,12 @@ services:
     build: .
     ports:
       - "8443:8443"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./certs:/app/certs:ro
+      - ./runtime:/app/runtime
     restart: unless-stopped
     logging:
       driver: json-file

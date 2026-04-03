@@ -69,10 +69,19 @@ Review these values as well and adjust if needed:
 ### 1. Build the image
 
 ```powershell
+.\scripts\inspect-docker-proxy-path.ps1
 docker compose build
 ```
 
 If the build fails while pulling `node:22-slim`, the issue is network access to Docker Hub, not the repository itself.
+
+Current Windows-specific rule:
+
+- Docker Desktop daemon proxy and container runtime proxy are two different paths
+- runtime containers can use `host.docker.internal` if Compose adds `host-gateway`
+- the Docker daemon still needs a proxy endpoint that is reachable from the Docker VM itself
+
+If your local proxy only listens on Windows loopback, the runtime path can still be fixed in-repo, but image pulls may continue to fail until Docker Desktop can reach that proxy.
 
 ### 2. Start the service
 
@@ -84,10 +93,18 @@ If the upstream must be reached through a local or remote proxy, prefer setting 
 
 ```yaml
 network:
-  proxy_url: http://127.0.0.1:10808
+  proxy_url: http://host.docker.internal:10808
 ```
 
-This is more reliable than assuming the Node runtime inside Docker will automatically use host proxy settings.
+For Docker Desktop, `host.docker.internal` is the correct runtime-side host alias.  
+`127.0.0.1` inside the container points back to the container itself, not to the Windows host.
+
+The repository Compose file now also includes:
+
+- `extra_hosts: host.docker.internal:host-gateway`
+- `./runtime:/app/runtime`
+
+This gives the container a stable host alias and persists file logs outside the container.
 
 ### 3. Inspect logs
 
@@ -158,6 +175,7 @@ Operational rule:
 
 - whenever testing `claude -p`, OAuth refresh, or gateway upstream calls from automation, always inject the proxy environment variables in the same command or process launcher
 - for long-term deployment, prefer `network.proxy_url` in config over ad hoc process launch injection
+- for Docker, use a container-reachable proxy host such as `host.docker.internal`, not host loopback
 
 ## MITM Capture Workflow
 
@@ -258,6 +276,26 @@ For real use:
 
 - replace it with a proper certificate
 - avoid exposing plain HTTP
+
+## Docker Backfill Findings
+
+Current Docker verification produced two separate findings:
+
+1. Container runtime path
+
+- with `host.docker.internal:host-gateway`, a probe container can reach `host.docker.internal:10808`
+- this means the gateway runtime inside Docker can use:
+  `network.proxy_url: http://host.docker.internal:10808`
+
+2. Docker daemon build path
+
+- `docker compose build` still depends on Docker Desktop daemon proxy reachability during base-image pulls
+- if Docker Desktop itself cannot reach the configured proxy, repository changes alone cannot fix `node:22-slim` pulls
+
+Operationally, this means:
+
+- runtime parity is now documented and encoded in Compose
+- image-pull failures should be triaged as Docker Desktop/network prerequisites, not as gateway code regressions
 
 ### Secrets
 

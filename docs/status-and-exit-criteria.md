@@ -29,7 +29,7 @@
 
 ### 1. Gateway 可用性
 
-完成度：`75%`
+完成度：`78%`
 
 已完成：
 
@@ -38,10 +38,11 @@
 - `.claude.json` 接入路径已经明确
 - `quiet mode` 已经适合作为对外默认模式
 - `alignment mode` 已经能作为研究模式稳定复现主链
+- Docker runtime 侧的 host alias、日志落盘和代理约定已经冻结
 
 未完成：
 
-- Docker 还没重新打通验证
+- Docker daemon 的 base-image pull 仍依赖 Docker Desktop 自身的代理可达性
 - 证书与部署方式还偏本地测试
 - 还没有做持续运行和多人压测
 
@@ -84,7 +85,7 @@
 
 - bridge feature gate 本身仍然没有放量，所以 `remote-control` 仍不适合作为正向能力验证面
 - `event_logging` 的 current findings 已足够冻结到 `repeat / delay / probe-type` 三轴；更深的 interactive / resume 类 probe 暂不影响当前 v1 收尾
-- Docker 场景还没回补验证
+- Docker runtime 侧已回补；剩下的是 Docker Desktop daemon build path 的外部代理可达性前置条件
 
 ### 3. 方法论与可维护性
 
@@ -241,6 +242,9 @@
 
 - 用已经稳定的配置和结论重新验证容器场景
 - 不再让 Docker 成为单独一套逻辑
+- 当前状态：
+  - runtime 侧已经有结论
+  - 剩下的是 Docker Desktop daemon 对代理的外部可达性前置条件
 
 ## 工期评估
 
