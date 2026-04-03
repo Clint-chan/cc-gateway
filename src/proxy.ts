@@ -6,7 +6,7 @@ import { URL } from 'url'
 import type { Config } from './config.js'
 import { authenticate, initAuth } from './auth.js'
 import { getAccessToken } from './oauth.js'
-import { rewriteBody, rewriteHeaders } from './rewriter.js'
+import { rewriteBodyWithHeaders, rewriteHeaders } from './rewriter.js'
 import { audit, log } from './logger.js'
 import { getProxyAgent } from './net.js'
 
@@ -108,10 +108,20 @@ async function handleRequest(
   }
   let body = Buffer.concat(chunks)
 
+  const inboundUserAgent = req.headers['user-agent']
+  if (typeof inboundUserAgent === 'string') {
+    log('debug', `Inbound client user-agent: ${inboundUserAgent}`)
+  }
+
   // Rewrite identity fields in body
   if (body.length > 0) {
     try {
-      body = rewriteBody(body, path, config) as Buffer<ArrayBuffer>
+      body = rewriteBodyWithHeaders(
+        body,
+        path,
+        config,
+        req.headers as Record<string, string | string[] | undefined>,
+      ) as Buffer<ArrayBuffer>
     } catch (err) {
       log('error', `Body rewrite failed for ${path}: ${err}`)
     }
@@ -128,14 +138,24 @@ async function handleRequest(
   rewrittenHeaders['authorization'] = `Bearer ${oauthToken}`
   delete rewrittenHeaders['x-api-key']
 
-  const oauthBeta = 'oauth-2025-04-20'
+  const requiredBetas = [
+    'oauth-2025-04-20',
+    ...(config.client?.required_betas || []),
+  ]
   const currentBeta = typeof rewrittenHeaders['anthropic-beta'] === 'string'
     ? rewrittenHeaders['anthropic-beta']
     : ''
-  if (!currentBeta) {
-    rewrittenHeaders['anthropic-beta'] = oauthBeta
-  } else if (!currentBeta.split(',').map(v => v.trim()).includes(oauthBeta)) {
-    rewrittenHeaders['anthropic-beta'] = `${currentBeta},${oauthBeta}`
+  const currentBetaSet = new Set(
+    currentBeta
+      .split(',')
+      .map(v => v.trim())
+      .filter(Boolean),
+  )
+  for (const beta of requiredBetas) {
+    currentBetaSet.add(beta)
+  }
+  if (currentBetaSet.size > 0) {
+    rewrittenHeaders['anthropic-beta'] = Array.from(currentBetaSet).join(',')
   }
 
   if (!rewrittenHeaders['x-app']) {
@@ -219,7 +239,12 @@ function buildVerificationPayload(config: Config) {
   }
 
   const rewritten = JSON.parse(
-    rewriteBody(Buffer.from(JSON.stringify(sampleInput)), '/v1/messages', config).toString('utf-8'),
+    rewriteBodyWithHeaders(
+      Buffer.from(JSON.stringify(sampleInput)),
+      '/v1/messages',
+      config,
+      { 'user-agent': config.client?.user_agent || `claude-cli/${config.env.version}` },
+    ).toString('utf-8'),
   )
 
   return {

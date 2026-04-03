@@ -11,9 +11,15 @@ This directory stores:
 
 Keep all temporary capture artifacts here so auth/proxy debugging remains reproducible.
 
+Every time a capture leads to a concrete alignment fix, also append the conclusion to:
+
+- [packet-alignment-log.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/packet-alignment-log.md)
+
 ## Files
 
 - `capture.py`: mitmdump addon for request/response capture
+- `extract_signals.py`: extract the latest request's key fingerprint signals from a `.flows` file
+- `diff_signals.py`: compare the latest key signals from direct and gateway captures
 - `claude-cli.flows`: direct Claude CLI flow dump
 - `claude-cli.log`: parsed direct Claude CLI request log
 - `direct-debug.txt`: direct `claude -p "hello"` success log
@@ -61,3 +67,29 @@ This means:
    - `CLAUDE_CODE_OAUTH_TOKEN=gateway-managed`
    - `ANTHROPIC_CUSTOM_HEADERS=x-api-key: <token>`
 4. If MITM is needed again, capture to `.flows` first and parse afterwards
+
+## Useful Commands
+
+Extract the latest captured gateway request signals:
+
+```powershell
+python mitm/extract_signals.py mitm/gateway.flows
+```
+
+Extract the latest three captured requests:
+
+```powershell
+python mitm/extract_signals.py mitm/gateway.flows 3
+```
+
+Compare the latest direct and gateway signals:
+
+```powershell
+python mitm/diff_signals.py mitm/claude-cli.flows mitm/gateway.flows
+```
+
+Compare the latest `/v1/messages` request specifically:
+
+```powershell
+python mitm/diff_signals.py mitm/claude-cli.flows mitm/gateway.flows /v1/messages
+```

@@ -29,11 +29,17 @@ export type Config = {
     refresh_token: string
     expires_at?: number
   }
+  client?: {
+    user_agent?: string
+    entrypoint?: string
+    client_type?: string
+    required_betas?: string[]
+  }
   identity: {
     device_id: string
     email: string
   }
-  env: Record<string, string | boolean | number>
+  env: Record<string, unknown>
   // System prompt environment masking - must be consistent with env above
   prompt_env: {
     platform: string        // "darwin" — must match env.platform
@@ -46,6 +52,9 @@ export type Config = {
     rss_range: [number, number]
     heap_total_range: [number, number]
     heap_used_range: [number, number]
+    external_range?: [number, number]
+    array_buffers_range?: [number, number]
+    cpu_percent_range?: [number, number]
   }
   logging: {
     level: 'debug' | 'info' | 'warn' | 'error'

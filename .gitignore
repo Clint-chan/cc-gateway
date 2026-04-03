@@ -4,8 +4,11 @@ dist/
 .env
 .claude.json
 config.yaml
+config.capture.yaml
 certs/
 /reference
 *.out.log
 *.err.log
 mitm/__pycache__/
+mitm/gateway.flows
+mitm/gateway.log

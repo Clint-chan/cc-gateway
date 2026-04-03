@@ -27,6 +27,15 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [auth-proxy-debugging.md](./auth-proxy-debugging.md)
   Detailed record of the Windows auth/proxy debugging path, MITM evidence, final working client setup, and Docker follow-up notes.
 
+- [packet-alignment-log.md](./packet-alignment-log.md)
+  Single running log for every telemetry, header, and body alignment fix against captured first-party Claude Code traffic.
+
+- [fingerprint-catalog.md](./fingerprint-catalog.md)
+  Central catalog of fingerprint surfaces, evidence paths, code ownership, and update workflow.
+
+- [telemetry-automation-plan.md](./telemetry-automation-plan.md)
+  Semi-automation roadmap for recurring capture, parsing, diffing, and manual review.
+
 ### Client Onboarding
 
 - [.claude.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.json.example)

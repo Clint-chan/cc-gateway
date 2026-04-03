@@ -27,6 +27,17 @@ network:
 oauth:
   refresh_token: "your-refresh-token-here"
 
+# Canonical client persona.
+# Use this when you want multiple machines to present a single first-party
+# client story instead of leaking mixed interactive/non-interactive modes.
+client:
+  user_agent: "claude-cli/2.1.91 (external, sdk-cli)"
+  entrypoint: sdk-cli
+  client_type: sdk-cli
+  required_betas:
+    - oauth-2025-04-20
+    - advanced-tool-use-2025-11-20
+
 # Authentication - each client gets a bearer token
 # Generate tokens: npm run generate-token
 auth:
@@ -60,6 +71,16 @@ env:
   build_time: "2026-03-20T21:26:18Z"
   deployment_environment: unknown-darwin
   vcs: git
+  # Optional telemetry alignment fields from first-party event metadata:
+  # remote_environment_type: ssh
+  # coworker_type: teammate
+  # claude_code_container_id: container-abc
+  # claude_code_remote_session_id: remote-session-xyz
+  # tags: [team-a, canary]
+  # wsl_version: WSL2
+  # linux_distro_id: ubuntu
+  # linux_distro_version: "24.04"
+  # linux_kernel: 6.8.0-57-generic
 
 # System prompt environment masking
 # These values replace the <env> block in the system prompt text.
@@ -76,6 +97,9 @@ process:
   rss_range: [300000000, 500000000]  # 300-500MB realistic range
   heap_total_range: [40000000, 80000000]
   heap_used_range: [100000000, 200000000]
+  external_range: [3000000, 12000000]
+  array_buffers_range: [200000, 2000000]
+  cpu_percent_range: [0, 35]
 
 # Logging
 logging:
