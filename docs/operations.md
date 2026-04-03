@@ -70,6 +70,7 @@ Put these in `.env`:
 Keep these in `config.yaml`:
 
 - fingerprint profile reference
+- capacity profile hints
 - rewrite policy defaults
 
 `fingerprint_profile` can now be either:
@@ -111,6 +112,7 @@ Review these values as well and adjust if needed:
 
 Then review [config.yaml](/C:/Users/94503/Documents/GitHub/cc-gateway/config.yaml) only if you want to change the canonical fingerprint persona.
 Most fingerprint changes should now happen in the referenced profile file instead.
+Account-side scheduler hints such as `capacity_profile.max_active_sessions_hint` or `capacity_profile.drain_threshold` still belong in `config.yaml`, not in the fingerprint asset.
 
 ## Local Docker Deployment
 

@@ -22,6 +22,15 @@ export type Config = {
     proxy_url?: string
   }
   fingerprint_profile?: string
+  capacity_profile?: {
+    id?: string
+    admission_mode?: 'observe-only'
+    max_active_sessions_hint?: number
+    rolling_window_budget_hint?: number
+    weekly_budget_hint?: number
+    peak_hour_multiplier?: number
+    drain_threshold?: number
+  }
   auth: {
     tokens: TokenEntry[]
   }
@@ -175,6 +184,21 @@ function normalizeOptionalStrings(config: Config): void {
   if (config.logging.audit_file == null || config.logging.audit_file === '') {
     delete config.logging.audit_file
   }
+  if (config.capacity_profile?.max_active_sessions_hint != null) {
+    config.capacity_profile.max_active_sessions_hint = Number(config.capacity_profile.max_active_sessions_hint)
+  }
+  if (config.capacity_profile?.rolling_window_budget_hint != null) {
+    config.capacity_profile.rolling_window_budget_hint = Number(config.capacity_profile.rolling_window_budget_hint)
+  }
+  if (config.capacity_profile?.weekly_budget_hint != null) {
+    config.capacity_profile.weekly_budget_hint = Number(config.capacity_profile.weekly_budget_hint)
+  }
+  if (config.capacity_profile?.peak_hour_multiplier != null) {
+    config.capacity_profile.peak_hour_multiplier = Number(config.capacity_profile.peak_hour_multiplier)
+  }
+  if (config.capacity_profile?.drain_threshold != null) {
+    config.capacity_profile.drain_threshold = Number(config.capacity_profile.drain_threshold)
+  }
 }
 
 function loadYamlWithEnv<T>(path: string): T {
@@ -257,6 +281,14 @@ export function loadConfig(configPath?: string): Config {
   }
   if (!config.process?.constrained_memory || !config.process?.rss_range || !config.process?.heap_total_range || !config.process?.heap_used_range) {
     throw new Error('config: process must be supplied inline or via fingerprint_profile')
+  }
+  if (config.capacity_profile?.max_active_sessions_hint != null && config.capacity_profile.max_active_sessions_hint <= 0) {
+    throw new Error('config: capacity_profile.max_active_sessions_hint must be greater than zero')
+  }
+  if (config.capacity_profile?.drain_threshold != null) {
+    if (config.capacity_profile.drain_threshold <= 0 || config.capacity_profile.drain_threshold > 1) {
+      throw new Error('config: capacity_profile.drain_threshold must be within (0, 1]')
+    }
   }
 
   return config

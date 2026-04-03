@@ -19,10 +19,11 @@ The current runtime now routes requests through a scheduler abstraction even tho
 Current implementation:
 
 - one synthesized runtime account derived from the active gateway config
-- one synthesized capacity profile
+- one typed capacity profile loaded from runtime config, with synthesized defaults when omitted
 - one observe-only scheduler mode
 - one sticky-affinity map
 - one active-lease map for request lifecycle tracking
+- one in-memory budget-state observer fed by upstream rate-limit headers
 
 This means the runtime already has explicit concepts for:
 
@@ -32,6 +33,9 @@ This means the runtime already has explicit concepts for:
 - proxy binding
 - session affinity
 - busy/idle state
+- quota state
+- drain state
+- rolling-window utilization observation
 
 ## Why This Exists Before Account Pool
 
@@ -61,10 +65,15 @@ The account id is deterministic and derived from the account email.
 
 ### Capacity Profile
 
-The runtime also synthesizes one capacity profile:
+The runtime now accepts a structured capacity profile from config, including:
 
-- `admission_mode = observe-only`
-- `max_active_sessions_hint = 1`
+- `id`
+- `admission_mode`
+- `max_active_sessions_hint`
+- `rolling_window_budget_hint`
+- `weekly_budget_hint`
+- `peak_hour_multiplier`
+- `drain_threshold`
 
 This is intentionally not enforcing concurrency yet.
 
@@ -96,6 +105,22 @@ When all leases finish:
 
 This gives us a stable place to add real admission control later.
 
+### Budget State Observation
+
+When upstream responses include rate-limit headers, the scheduler now ingests them into in-memory account state.
+
+Current observed fields:
+
+- highest seen unified utilization value
+- reset timestamp
+- surpassed-threshold signal
+- `retry-after`
+- derived `quota_state`
+- derived `drain_state`
+
+This does not yet block requests.
+It only exposes the right account state so later queueing, drain, cooldown, and capacity-aware routing have a stable foundation.
+
 ## Health Surface
 
 `/_health` now includes a scheduler snapshot with:
@@ -105,10 +130,20 @@ This gives us a stable place to add real admission control later.
 - `capacity_profile_id`
 - `busy_state`
 - `drain_state`
+- `quota_state`
 - `active_sessions`
 - `sticky_affinities`
 - `admission_mode`
 - `max_active_sessions_hint`
+- `rolling_window_utilization`
+- `rolling_window_resets_at`
+- `retry_after_seconds`
+- `threshold_surpassed`
+- `rolling_window_budget_hint`
+- `weekly_budget_hint`
+- `peak_hour_multiplier`
+- `drain_threshold`
+- `raw_budget_header_count`
 - `proxy_bound`
 
 This is useful for runtime inspection and later operator-facing health views.
@@ -120,10 +155,11 @@ This substrate does **not** yet do:
 - queueing
 - retry scheduling
 - true multi-account selection
-- budget-aware admission
 - peak-hour policy
 - drain/circuit-breaker enforcement
 - sticky proxy failover sets
+
+Even though the scheduler now **observes** budget state, it still does not enforce budget-aware admission.
 
 Those remain future scheduler work.
 
@@ -143,8 +179,8 @@ So the runtime currently does the right smaller thing:
 
 The next scheduler work should build on this substrate in order:
 
-1. add typed capacity-profile inputs instead of synthetic defaults
-2. add account Busy/Idle/Drain reasons
-3. add session-affinity-aware dispatch interfaces
-4. add budget-state ingestion from upstream signals
-5. only then add queueing and multi-account selection
+1. add account Busy/Idle/Drain reason codes
+2. add session-affinity-aware dispatch interfaces
+3. extend budget observation into admission decisions
+4. add queueing, drain, and cooldown policies
+5. only then add multi-account selection

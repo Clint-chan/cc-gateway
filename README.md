@@ -66,7 +66,7 @@ npm run generate-token my-machine
 cp .env.example .env
 cp config.example.yaml config.yaml
 # Edit .env: paste device_id, client token, OAuth refresh token, and deployment values
-# Edit config.yaml only when you want to change the structured fingerprint persona
+# Edit config.yaml when you want to change the structured fingerprint persona or account-side capacity hints
 ```
 
 ### 2. Extract OAuth token (on a machine that has logged into Claude Code)
@@ -104,6 +104,17 @@ The preferred runtime reference is now an asset ID, for example:
 
 ```yaml
 fingerprint_profile: "example-darwin-arm64"
+```
+
+Account-side scheduler hints also live in `config.yaml`, for example:
+
+```yaml
+capacity_profile:
+  id: "starter-max5x"
+  admission_mode: observe-only
+  max_active_sessions_hint: 1
+  rolling_window_budget_hint: 0.85
+  drain_threshold: 0.9
 ```
 
 ### 4. Verify
@@ -283,7 +294,7 @@ This project builds on:
 [license-url]: https://github.com/motiful/cc-gateway/blob/main/LICENSE
 [version-shield]: https://img.shields.io/badge/version-0.1.0--alpha-blue
 [version-url]: https://github.com/motiful/cc-gateway/releases
-[tests-shield]: https://img.shields.io/badge/tests-17%20passed-brightgreen
+[tests-shield]: https://img.shields.io/badge/tests-23%20passed-brightgreen
 [tests-url]: https://github.com/motiful/cc-gateway/blob/main/tests/unit/rewriter.test.ts
 [twitter-shield]: https://img.shields.io/badge/follow-%40whiletrue0x-1DA1F2?logo=x&logoColor=white
 [twitter-url]: https://x.com/whiletrue0x

@@ -129,6 +129,7 @@
 - 仓库结构演进规则
 - 指纹资产层已经开始 file-backed 拆分
 - 单账号 runtime 已经开始走账号中心化 scheduler substrate
+- scheduler substrate 已经开始吸收 upstream rate-limit 头并暴露本地 budget state
 
 未完成：
 

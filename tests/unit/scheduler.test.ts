@@ -7,6 +7,15 @@ const config: Config = {
   upstream: { url: 'https://api.anthropic.com' },
   network: { proxy_url: 'http://192.168.40.184:10808' },
   fingerprint_profile: 'example-darwin-arm64',
+  capacity_profile: {
+    id: 'starter-max5x',
+    admission_mode: 'observe-only',
+    max_active_sessions_hint: 2,
+    rolling_window_budget_hint: 0.85,
+    weekly_budget_hint: 0.8,
+    peak_hour_multiplier: 1.25,
+    drain_threshold: 0.9,
+  },
   auth: { tokens: [{ name: 'test', token: 'test-token' }] },
   oauth: { refresh_token: 'test-refresh' },
   identity: {
@@ -61,7 +70,7 @@ test('builds a stable account-centric routing decision', () => {
 
   assert.match(lease.decision.account_id, /^acct-[0-9a-f]{12}$/)
   assert.equal(lease.decision.fingerprint_profile_id, 'example-darwin-arm64')
-  assert.equal(lease.decision.capacity_profile_id, 'cap-example-darwin-arm64')
+  assert.equal(lease.decision.capacity_profile_id, 'starter-max5x')
   assert.equal(lease.decision.proxy_url, 'http://192.168.40.184:10808')
 
   lease.complete(200)
@@ -114,6 +123,53 @@ test('tracks busy and idle state across request lifecycle', () => {
   lease.fail(502, new Error('upstream failed'))
   assert.equal(scheduler.snapshot().busy_state, 'IDLE')
   assert.equal(scheduler.snapshot().active_sessions, 0)
+})
+
+test('observes upstream budget headers and updates quota state', () => {
+  const scheduler = createScheduler(config)
+  const lease = scheduler.beginRequest({
+    client_name: 'tester',
+    method: 'POST',
+    path: '/v1/messages',
+    headers: {},
+    body: Buffer.from(JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] })),
+  })
+
+  lease.complete(200, {
+    'anthropic-ratelimit-unified-chat-utilization': '0.92',
+    'anthropic-ratelimit-unified-chat-reset': '2026-04-04T12:00:00Z',
+  })
+
+  const snapshot = scheduler.snapshot()
+  assert.equal(snapshot.quota_state, 'LIMITED')
+  assert.equal(snapshot.drain_state, 'DRAINING')
+  assert.equal(snapshot.rolling_window_utilization, 0.92)
+  assert.equal(snapshot.rolling_window_resets_at, '2026-04-04T12:00:00Z')
+  assert.equal(snapshot.raw_budget_header_count, 2)
+  assert.equal(snapshot.drain_threshold, 0.9)
+})
+
+test('marks account drained when upstream signals quota exhaustion', () => {
+  const scheduler = createScheduler(config)
+  const lease = scheduler.beginRequest({
+    client_name: 'tester',
+    method: 'POST',
+    path: '/v1/messages',
+    headers: {},
+    body: Buffer.from(JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] })),
+  })
+
+  lease.complete(429, {
+    'anthropic-ratelimit-unified-chat-utilization': '1',
+    'anthropic-ratelimit-unified-chat-surpassed-threshold': 'true',
+    'retry-after': '60',
+  })
+
+  const snapshot = scheduler.snapshot()
+  assert.equal(snapshot.quota_state, 'EXHAUSTED')
+  assert.equal(snapshot.drain_state, 'DRAINED')
+  assert.equal(snapshot.retry_after_seconds, 60)
+  assert.equal(snapshot.threshold_surpassed, true)
 })
 
 console.log(`\n${passed} passed, ${failed} failed\n`)

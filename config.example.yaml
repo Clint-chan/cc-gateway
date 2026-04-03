@@ -28,6 +28,17 @@ oauth:
 # You can reference either an asset ID or a relative YAML path.
 fingerprint_profile: "example-darwin-arm64"
 
+# Runtime capacity hints belong to the account-side scheduler substrate, not the fingerprint profile.
+# They do not yet enforce queueing or admission, but they shape health state and future routing policy.
+capacity_profile:
+  id: "starter-max5x"
+  admission_mode: observe-only
+  max_active_sessions_hint: 1
+  rolling_window_budget_hint: 0.85
+  weekly_budget_hint: 0.8
+  peak_hour_multiplier: 1.25
+  drain_threshold: 0.9
+
 auth:
   tokens:
     - name: "${GATEWAY_CLIENT_PRIMARY_NAME:-local-dev}"

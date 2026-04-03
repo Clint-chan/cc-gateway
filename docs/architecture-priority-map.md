@@ -400,7 +400,7 @@ From a whole-project perspective:
 - deployment/ops baseline: `good enough`
 - maintenance automation: `started but not finished`
 - fingerprint asset architecture: `in progress`
-- account-centric scheduler substrate: `started`
+- account-centric scheduler substrate: `started with typed capacity input and budget observation`
 - Claude Code source understanding for relevant surfaces: `good enough to keep advancing`
 - local project source understanding for current runtime: `good enough to refactor safely`
 - product maturity: `gateway beta / platform alpha`

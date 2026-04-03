@@ -29,6 +29,14 @@ upstream:
   url: "\${TEST_UPSTREAM_URL:-https://api.anthropic.com}"
 network:
   proxy_url: \${TEST_PROXY_URL:-null}
+capacity_profile:
+  id: \${TEST_CAPACITY_ID:-starter-max5x}
+  admission_mode: observe-only
+  max_active_sessions_hint: 2
+  rolling_window_budget_hint: 0.85
+  weekly_budget_hint: 0.8
+  peak_hour_multiplier: 1.2
+  drain_threshold: 0.9
 auth:
   tokens:
     - name: "\${TEST_CLIENT_NAME}"
@@ -140,6 +148,9 @@ TEST_EMAIL=tester@example.com
     assert.equal(config.auth.tokens[0]?.name, 'local-dev')
     assert.equal(config.auth.tokens[0]?.token, 'test-client-token')
     assert.equal(config.identity.email, 'tester@example.com')
+    assert.equal(config.capacity_profile?.id, 'starter-max5x')
+    assert.equal(config.capacity_profile?.max_active_sessions_hint, 2)
+    assert.equal(config.capacity_profile?.drain_threshold, 0.9)
   })
 })
 
@@ -171,6 +182,54 @@ TEST_EMAIL=tester@example.com
       /config: missing env var TEST_REFRESH_TOKEN/,
     )
   })
+})
+
+test('throws a clear error when capacity_profile is invalid', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'cc-gateway-invalid-capacity-'))
+  const configPath = join(dir, 'config.yaml')
+  const envPath = join(dir, '.env')
+
+  writeFileSync(
+    configPath,
+    baseConfig.replace('max_active_sessions_hint: 2', 'max_active_sessions_hint: 0'),
+  )
+  writeFileSync(
+    envPath,
+    `
+TEST_GATEWAY_PORT=8443
+TEST_CLIENT_NAME=invalid-capacity
+TEST_CLIENT_TOKEN=test-client-token
+TEST_REFRESH_TOKEN=test-refresh-token
+TEST_DEVICE_ID=eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+TEST_EMAIL=tester@example.com
+`,
+  )
+
+  const snapshot = new Map<string, string | undefined>()
+  for (const key of [
+    'TEST_GATEWAY_PORT',
+    'TEST_CLIENT_NAME',
+    'TEST_CLIENT_TOKEN',
+    'TEST_REFRESH_TOKEN',
+    'TEST_DEVICE_ID',
+    'TEST_EMAIL',
+  ]) {
+    snapshot.set(key, process.env[key])
+    delete process.env[key]
+  }
+
+  try {
+    assert.throws(
+      () => loadConfig(configPath),
+      /config: capacity_profile.max_active_sessions_hint must be greater than zero/,
+    )
+  } finally {
+    for (const [key, value] of snapshot) {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
+    rmSync(dir, { recursive: true, force: true })
+  }
 })
 
 test('loads client/env/prompt_env/process from fingerprint_profile', () => {

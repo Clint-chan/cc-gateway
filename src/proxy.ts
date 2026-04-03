@@ -202,7 +202,7 @@ async function handleRequest(
       proxyRes.pipe(res)
 
       proxyRes.on('end', () => {
-        lease.complete(status)
+        lease.complete(status, proxyRes.headers)
       })
 
       if (config.logging.audit) {
