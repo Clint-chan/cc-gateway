@@ -76,13 +76,19 @@ def extract_signal_summary(flow) -> dict:
 
 
 def main() -> int:
-    if len(sys.argv) < 2:
-        print("usage: python mitm/extract_signals.py <flows-file> [last-n]", file=sys.stderr)
+    if len(sys.argv) < 2 or len(sys.argv) > 4:
+        print(
+            "usage: python mitm/extract_signals.py <flows-file> [last-n] [url-substring]",
+            file=sys.stderr,
+        )
         return 1
 
     path = Path(sys.argv[1])
     last_n = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+    url_filter = sys.argv[3] if len(sys.argv) > 3 else None
     flows = read_flows(path)
+    if url_filter:
+        flows = [flow for flow in flows if url_filter in flow.request.pretty_url]
     if not flows:
         print("[]")
         return 0

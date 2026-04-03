@@ -93,8 +93,18 @@
 - [capture-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/capture-gateway.ps1)
 - [finalize-direct-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-direct-capture.ps1)
 - [finalize-gateway-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-gateway-capture.ps1)
+- [prepare-trusted-capture-workspace.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/prepare-trusted-capture-workspace.ps1)
+- [probe-growthbook-eval-direct.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-growthbook-eval-direct.ps1)
 - [extract_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/extract_signals.py)
 - [diff_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/diff_signals.py)
+
+其中：
+
+- `/api/eval/*` 的 direct 基线优先走 [trusted-capture-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/trusted-capture-workflow.md)
+- `extract_signals.py` 已支持按 URL substring 过滤，便于自动脚本直接抽：
+  - `/api/eval/`
+  - `/v1/messages`
+  - `/api/event_logging/`
 
 ## 自动任务触发条件
 

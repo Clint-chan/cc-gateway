@@ -217,6 +217,8 @@ Examples:
 
 ## Recommended Repository Structure
 
+Before doing the full split below, keep [repository-layout.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/repository-layout.md) as the day-to-day rulebook for where runtime code, tests, capture assets, logs, and reference materials belong.
+
 One practical structure for the fork:
 
 ```text

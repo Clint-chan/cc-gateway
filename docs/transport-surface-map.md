@@ -91,6 +91,10 @@
   - headless `-p` 路径只会 fire-and-forget 初始化 GrowthBook，进程可能先退出
   - local-jsx / interactive 命令如果当前 cwd 没 trust，GrowthBook 可能连 auth headers 都拿不到
   详见 [growthbook-eval-investigation.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/growthbook-eval-investigation.md)
+- 最新实抓：
+  在 trusted capture workspace 下，`claude -p "hello"` 已经明确抓到 `POST /api/eval/sdk-*`
+- 当前判断：
+  `/api/eval/*` 仍然是活的 direct-host side channel；默认 cwd 抓不到，不代表它不存在
 
 #### 2.2 1P event logging
 
@@ -135,11 +139,17 @@
 
 - 依据：
   [bootstrap.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/bootstrap.ts)
+- 最新实抓：
+  trusted capture workspace 下的 `claude -p "hello"` 已抓到 `GET /api/claude_cli/bootstrap`
 
 #### 3.2 grove 与账户设置
 
 - 依据：
   [grove.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/grove.ts)
+- 最新实抓：
+  trusted capture workspace 下的 `claude -p "hello"` 已抓到：
+  - `GET /api/claude_code_grove`
+  - `GET /api/oauth/account/settings`
 
 #### 3.3 usage / referral / overage credit grant / admin requests
 
@@ -163,6 +173,17 @@
   - [fastMode.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/fastMode.ts)
   - [ultrareviewQuota.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/ultrareviewQuota.ts)
   - [sessionIngress.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/sessionIngress.ts)
+
+#### 3.6 MCP 控制面
+
+- 依据：
+  - [officialRegistry.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/mcp/officialRegistry.ts)
+- 最新实抓：
+  trusted capture workspace 下的 `claude -p "hello"` 已抓到：
+  - `GET /v1/mcp_servers?limit=1000`
+  - `GET /mcp-registry/v0/servers?version=latest&visibility=commercial`
+- 备注：
+  这说明即使是最小 headless 请求，MCP 相关控制面也可能被带起来
 
 ## 两层 gating
 

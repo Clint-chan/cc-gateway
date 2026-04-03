@@ -439,6 +439,58 @@
     - trusted 的长生命周期会话
     - 或者一个 non-interactive 且明确阻塞 GrowthBook 的入口
 
+### A-018 trusted workspace 下的 headless 最小请求已重新抓到 `/api/eval/*`
+
+- 日期：2026-04-03
+- 证据：
+  - [trusted-capture-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/trusted-capture-workflow.md)
+  - [direct.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/direct.log)
+  - [direct.flows](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/direct.flows)
+  - [C:\\Users\\94503\\.claude.json](/C:/Users/94503/.claude.json)
+- 当前差异：
+  - 之前我们只能说“默认 cwd 的最小 headless 抓包里没看到 `/api/eval/*`”。
+  - 现在在独立 trusted workspace 下，同样是 `claude -p "hello"`，已经明确抓到：
+    - `POST /api/eval/sdk-*`
+    - `GET /v1/mcp_servers`
+    - `GET /api/claude_cli/bootstrap`
+    - `GET /api/claude_code_grove`
+    - `GET /api/oauth/account/settings`
+    - `GET /mcp-registry/v0/servers`
+    - `POST /v1/messages?beta=true`
+- 处理动作：
+  - 正式撤销“headless 基本抓不到 `/api/eval/*`”这类过强判断
+  - 把 trusted workspace + headless 最小请求升级为 `/api/eval/*` 的标准 direct probe
+  - 新增 [prepare-trusted-capture-workspace.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/prepare-trusted-capture-workspace.ps1)
+  - 新增 [probe-growthbook-eval-direct.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-growthbook-eval-direct.ps1)
+- 回归验证：
+  - [inspect-growthbook-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-growthbook-state.ps1) 已确认：
+    - home trust = `false`
+    - trusted capture workspace trust = `true`
+  - `headless-hello` 在该工作区里成功返回 `Hello! How can I help you today?`
+  - `direct.log` 中已出现 `SIGNAL eval.attributes=...`
+- 剩余风险：
+  - 当前结论仍是 direct 场景；下一轮还要做 trusted via-gateway 对照
+  - `/api/event_logging/*` 在这次 trusted headless 对照里没有同步出现，后面要继续看它的 gating 和时序
+
+### A-019 `remote-control` 空抓包不再能解释成“系统代理没生效”
+
+- 日期：2026-04-03
+- 证据：
+  - [direct.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/direct.log)
+  - [growthbook-eval-investigation.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/growthbook-eval-investigation.md)
+  - [cli.js](/C:/Users/94503/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/cli.js)
+- 当前差异：
+  - 之前 `claude remote-control` 在 MITM 下可能没有留下任何流量，容易让人误判成“代理没接上”。
+  - 现在同一 trusted workspace、同一 MITM 端口下，`headless-hello` 已经抓到 `/api/eval/*` 和多条 first-party 控制面请求。
+- 处理动作：
+  - 把 `remote-control` 从“默认 `/api/eval/*` 探针”降级为“bridge/entitlement 专项探针”
+  - 在调查文档里明确：`remote-control` 空抓包更可能是命令逻辑、bridge gating 或 entitlement 早于网络发包返回
+- 回归验证：
+  - trusted workspace 的 `headless-hello` 已经证明 env proxy + MITM 链路整体是好的
+- 剩余风险：
+  - `remote-control` 具体在哪一步提前返回，还要继续对照 bundle 源码和 debug 日志拆
+  - 这条链还不能直接拿来推断 gateway 对 `/api/eval/*` 的覆盖率
+
 ## 下一步优先级
 
 1. 专项触发 `/api/eval/*`，验证它到底是 headless 退出问题还是场景问题

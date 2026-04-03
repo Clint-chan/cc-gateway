@@ -13,6 +13,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [architecture-roadmap.md](./architecture-roadmap.md)
   Overall fork direction, recommended module split, and phased refactor path.
 
+- [repository-layout.md](./repository-layout.md)
+  Repository structure rules for runtime code, tests, capture assets, logs, and the later gateway/admin-api/admin-web split.
+
 - [data-model.md](./data-model.md)
   Core entities for accounts, fingerprints, proxies, clients, policies, sessions, and audit records.
 
@@ -41,6 +44,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 
 - [growthbook-eval-investigation.md](./growthbook-eval-investigation.md)
   Dedicated investigation log for `/api/eval/*`, trust gating, disk cache behavior, and the current capture strategy.
+
+- [trusted-capture-workflow.md](./trusted-capture-workflow.md)
+  Dedicated workflow for creating a separate trusted capture workspace and probing GrowthBook-dependent paths without mixing home or repo trust state.
 
 - [telemetry-automation-plan.md](./telemetry-automation-plan.md)
   Semi-automation roadmap for recurring capture, parsing, diffing, and manual review.

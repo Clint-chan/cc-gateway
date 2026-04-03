@@ -34,7 +34,12 @@
 ### 抓包脚本目录
 
 - [capture-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/capture-gateway.ps1)
+- [capture-direct.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/capture-direct.ps1)
 - [finalize-gateway-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-gateway-capture.ps1)
+- [finalize-direct-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-direct-capture.ps1)
+- [inspect-growthbook-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-growthbook-state.ps1)
+- [prepare-trusted-capture-workspace.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/prepare-trusted-capture-workspace.ps1)
+- [probe-growthbook-eval-direct.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-growthbook-eval-direct.ps1)
 - [extract_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/extract_signals.py)
 - [diff_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/diff_signals.py)
 
@@ -265,7 +270,7 @@
 - 参考位置：
   [claude-cli.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/claude-cli.log)
 - 当前状态：
-  旧 direct 抓包里出现过；当前 custom base URL 测试路径里未稳定复现
+  trusted capture workspace 下的 `headless-hello` 已再次复现
 
 #### 5.2 /api/oauth/account/settings
 
@@ -274,7 +279,7 @@
 - 参考位置：
   [claude-cli.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/claude-cli.log)
 - 当前状态：
-  旧 direct 抓包里出现过；gateway 场景下待单独复抓
+  trusted capture workspace 下的 `headless-hello` 已再次复现；gateway 场景待单独复抓
 
 #### 5.3 /v1/mcp_servers 与 registry 相关接口
 
@@ -283,7 +288,9 @@
 - 参考位置：
   [claude-cli.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/claude-cli.log)
 - 当前状态：
-  需要单独测试带 MCP 的场景
+  trusted capture workspace 下的 `headless-hello` 已复现：
+  - `/v1/mcp_servers`
+  - `/mcp-registry/v0/servers`
 
 #### 5.4 custom base URL gating
 
@@ -320,8 +327,9 @@
 
 1. 用本机 direct CLI 跑一次最小请求
 2. 抓 `claude-cli.flows` 和 `claude-cli.log`
-3. 如果要看 telemetry，确保当前是 `alignment mode`
-3. 看是否新增：
+3. 如果要看 `/api/eval/*`，先走 [trusted-capture-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/trusted-capture-workflow.md)
+4. 如果要看 telemetry，确保当前是 `alignment mode`
+5. 看是否新增：
    - 新 header
    - 新 beta
    - 新 telemetry 路径
@@ -338,6 +346,10 @@
    - `gateway.log`
 6. 读 `gateway.log` 时只看最后一次请求，不要把历史抓包行误判成当前结果
 7. 如果要解析 `.flows`，先停止 `mitmdump`，再运行提取或 diff 脚本
+8. 如果要抽单个 endpoint，优先用：
+   - `python mitm/extract_signals.py mitm/direct.flows 10 /api/eval/`
+   - `python mitm/extract_signals.py mitm/direct.flows 10 /v1/messages`
+   - `python mitm/diff_signals.py mitm/direct.flows mitm/gateway.flows /v1/messages`
 
 ### 方法三：对照参考源码
 
