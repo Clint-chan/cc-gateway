@@ -75,7 +75,7 @@
 
 ### 3. 方法论与可维护性
 
-完成度：`90%`
+完成度：`92%`
 
 已完成：
 
@@ -85,6 +85,7 @@
 - 有 GrowthBook 专项调查文档
 - 有 trusted capture workflow
 - 有 trusted `via-gateway` 双通道 workflow
+- 有 auth-mode-sensitive 控制面矩阵文档和结构化目标清单
 - 有半自动化路线图
 - 有仓库布局规范
 - 有 URL 过滤提取和双通道 capture 脚本
@@ -220,9 +221,10 @@
 
 - 主链与一部分 direct side channel 已拆开
 - `/api/eval/*` 已确认会受 auth mode 直接影响
+- auth-mode-sensitive 控制面矩阵已经单独冻结成资产
 - 当前剩余重点只剩：
   - `/api/event_logging/*` 的最小稳定触发矩阵
-  - auth-mode-sensitive 控制面矩阵冻结
+  - auth-mode-sensitive 控制面矩阵继续补全未观察到的行
 
 ### T2. event logging 的 trusted 时序复抓
 

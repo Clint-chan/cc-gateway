@@ -1,0 +1,65 @@
+[
+  {
+    "key": "messages",
+    "surface": "/v1/messages",
+    "pattern": "/v1/messages",
+    "expected_owner": "gateway-mainline",
+    "notes": "Main inference path for via-gateway captures."
+  },
+  {
+    "key": "growthbook_eval",
+    "surface": "/api/eval/sdk-*",
+    "pattern": "/api/eval/",
+    "expected_owner": "direct-host-side-channel",
+    "notes": "GrowthBook remote eval; auth-mode-sensitive."
+  },
+  {
+    "key": "event_logging",
+    "surface": "/api/event_logging/v2/batch",
+    "pattern": "/api/event_logging/",
+    "expected_owner": "direct-host-side-channel",
+    "notes": "1P event logging; timing-sensitive in managed-oauth."
+  },
+  {
+    "key": "bootstrap",
+    "surface": "/api/claude_cli/bootstrap",
+    "pattern": "claude_cli/bootstrap",
+    "expected_owner": "direct-host-side-channel",
+    "notes": "Bootstrap and launch-time configuration surface."
+  },
+  {
+    "key": "account_settings",
+    "surface": "/api/oauth/account/settings",
+    "pattern": "oauth/account/settings",
+    "expected_owner": "direct-host-side-channel",
+    "notes": "OAuth account settings lookups."
+  },
+  {
+    "key": "grove",
+    "surface": "/api/claude_code_grove",
+    "pattern": "claude_code_grove",
+    "expected_owner": "direct-host-side-channel",
+    "notes": "Grove entitlement/config control plane."
+  },
+  {
+    "key": "penguin_mode",
+    "surface": "/api/claude_code_penguin_mode",
+    "pattern": "claude_code_penguin_mode",
+    "expected_owner": "direct-host-side-channel",
+    "notes": "Penguin/fast-mode style control plane."
+  },
+  {
+    "key": "mcp_servers",
+    "surface": "/v1/mcp_servers",
+    "pattern": "/v1/mcp_servers",
+    "expected_owner": "direct-host-side-channel",
+    "notes": "First-party MCP server discovery."
+  },
+  {
+    "key": "mcp_registry",
+    "surface": "/mcp-registry/v0/servers",
+    "pattern": "/mcp-registry/v0/servers",
+    "expected_owner": "direct-host-side-channel",
+    "notes": "Registry discovery path that remains visible in both auth modes."
+  }
+]

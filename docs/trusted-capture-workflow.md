@@ -187,7 +187,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\capture-dual-via-gateway.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\probe-trusted-via-gateway.ps1 -EnableDirectMitm -AuthMode managed-oauth
 powershell -ExecutionPolicy Bypass -File .\scripts\probe-trusted-via-gateway.ps1 -EnableDirectMitm -AuthMode managed-oauth -RepeatCount 2
 powershell -ExecutionPolicy Bypass -File .\scripts\finalize-dual-via-gateway.ps1 -StopGateway
+python mitm\summarize_control_plane_matrix.py --mode-label managed-oauth-combined
 ```
+
+如果要把 `managed-oauth-r1` 和 `managed-oauth-r2` 分开入表，不要复用同一轮 capture，直接按 [auth-mode-control-plane-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/auth-mode-control-plane-matrix.md) 里的三段独立流程分别跑。
 
 这里有一个关键点：
 
@@ -230,6 +233,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\finalize-dual-via-gateway.ps1
 - `ANTHROPIC_AUTH_TOKEN` 与 `CLAUDE_CODE_OAUTH_TOKEN` 不只是“不同写法”，而是会切换客户端的 subscriber / OAuth 叙事
 - `/api/eval/*` 是否出现，已经确认会受 auth mode 直接影响
 - `/api/event_logging/*` 在 `managed-oauth` 下不是完全不发，而是单次最小 probe 里更容易被时序掩盖；重复 probe 后已确认它仍然是 direct side-channel
+- auth-mode-sensitive 的当前基线，统一收口到 [auth-mode-control-plane-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/auth-mode-control-plane-matrix.md)
 
 ## 维护规则
 

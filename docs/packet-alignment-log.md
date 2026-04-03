@@ -601,6 +601,36 @@
     - 重复次数阈值
     - 是否和 query 间隔有关
 
+### A-023 auth-mode-sensitive 控制面矩阵已冻结成独立资产
+
+- 日期：2026-04-03
+- 证据：
+  - [auth-mode-control-plane-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/auth-mode-control-plane-matrix.md)
+  - [control_plane_targets.json](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/control_plane_targets.json)
+  - [summarize_control_plane_matrix.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/summarize_control_plane_matrix.py)
+  - [trusted-capture-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/trusted-capture-workflow.md)
+- 当前差异：
+  - 之前关于 `managed-oauth`、`external-auth-token`、`/api/eval/*`、`bootstrap`、`penguin`、`MCP`、`event_logging` 的结论，分散在：
+    - 抓包日志
+    - capture 脚本说明
+    - alignment log 历史条目
+  - 这会让后续版本升级时，仍然需要人工翻多份文档才能回答：
+    - 这是不是 auth mode 导致的
+    - 这条链当前应该出现在哪里
+    - 这轮变化到底算 transport 变化还是 rewrite 缺口
+- 处理动作：
+  - 新增独立矩阵文档 [auth-mode-control-plane-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/auth-mode-control-plane-matrix.md)
+  - 新增结构化目标清单 [control_plane_targets.json](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/control_plane_targets.json)
+  - 新增矩阵摘要脚本 [summarize_control_plane_matrix.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/summarize_control_plane_matrix.py)
+  - 把 trusted `via-gateway` 的复跑入口、输出命令和更新顺序统一挂到矩阵资产上
+- 回归验证：
+  - `python -m py_compile mitm\\summarize_control_plane_matrix.py`
+  - `python mitm\\summarize_control_plane_matrix.py --mode-label current-capture`
+- 剩余风险：
+  - 当前矩阵冻结的是“已观测到的最小基线”，不是所有路径的最终结论
+  - `/api/oauth/account/settings` 和 `/api/claude_code_grove` 在 via-gateway 最小 probe 里仍未重新出现
+  - `event_logging` 的最小稳定触发阈值还要继续补
+
 ## 下一步优先级
 
 1. 专项触发 `/api/eval/*`，验证它到底是 headless 退出问题还是场景问题

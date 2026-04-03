@@ -39,6 +39,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [transport-surface-map.md](./transport-surface-map.md)
   Map of which requests belong to the gateway mainline, which bypass to first-party hosts, and which are gated off by mode.
 
+- [auth-mode-control-plane-matrix.md](./auth-mode-control-plane-matrix.md)
+  Frozen matrix for auth-mode-sensitive control-plane behavior in the trusted via-gateway workflow.
+
 - [packet-alignment-log.md](./packet-alignment-log.md)
   Single running log for every telemetry, header, and body alignment fix against captured first-party Claude Code traffic.
 

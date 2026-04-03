@@ -255,6 +255,10 @@ CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
   - 一部分 first-party side channel 触发条件
 - `CLAUDE_CODE_OAUTH_TOKEN + ANTHROPIC_CUSTOM_HEADERS=x-api-key: ...` 则更接近 first-party subscriber/OAuth 叙事
 
+auth-mode-sensitive 的具体控制面矩阵，统一看：
+
+- [auth-mode-control-plane-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/auth-mode-control-plane-matrix.md)
+
 ## 对我们项目的含义
 
 ### 如果目标是实际使用
