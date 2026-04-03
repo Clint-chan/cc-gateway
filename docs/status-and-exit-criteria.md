@@ -128,6 +128,7 @@
 - API 设计草案
 - 仓库结构演进规则
 - 指纹资产层已经开始 file-backed 拆分
+- 单账号 runtime 已经开始走账号中心化 scheduler substrate
 
 未完成：
 

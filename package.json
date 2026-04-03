@@ -12,7 +12,7 @@
     "generate-token": "tsx src/scripts/generate-token.ts",
     "generate-identity": "tsx src/scripts/generate-identity.ts",
     "test": "npm run test:unit",
-    "test:unit": "tsx tests/unit/rewriter.test.ts && tsx tests/unit/config.test.ts"
+    "test:unit": "tsx tests/unit/rewriter.test.ts && tsx tests/unit/config.test.ts && tsx tests/unit/scheduler.test.ts"
   },
   "dependencies": {
     "https-proxy-agent": "^9.0.0",

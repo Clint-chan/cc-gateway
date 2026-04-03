@@ -28,6 +28,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [account-pool-scheduler-strategy.md](./account-pool-scheduler-strategy.md)
   Account-centric scheduler rules for stable per-account fingerprints, sticky proxies, budget-aware routing, queueing, and session affinity.
 
+- [runtime-scheduler-substrate.md](./runtime-scheduler-substrate.md)
+  Current single-account runtime scheduler substrate, including observe-only capacity state, sticky affinity tracking, and health-surface exposure.
+
 - [data-model.md](./data-model.md)
   Core entities for accounts, fingerprints, proxies, clients, policies, sessions, and audit records.
 

@@ -400,7 +400,7 @@ From a whole-project perspective:
 - deployment/ops baseline: `good enough`
 - maintenance automation: `started but not finished`
 - fingerprint asset architecture: `in progress`
-- account-centric scheduler substrate: `next`
+- account-centric scheduler substrate: `started`
 - Claude Code source understanding for relevant surfaces: `good enough to keep advancing`
 - local project source understanding for current runtime: `good enough to refactor safely`
 - product maturity: `gateway beta / platform alpha`
@@ -417,4 +417,4 @@ The next priority is:
 Once that loop is stable, the next structural milestones are:
 
 1. harden the fingerprint asset layer
-2. introduce the account-centric scheduler substrate
+2. extend the account-centric scheduler substrate from observe-only state into real routing policy

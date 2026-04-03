@@ -9,16 +9,18 @@ import { getAccessToken } from './oauth.js'
 import { rewriteBodyWithHeaders, rewriteHeaders } from './rewriter.js'
 import { audit, log } from './logger.js'
 import { getProxyAgent } from './net.js'
+import { createScheduler } from './scheduler.js'
 
 export function startProxy(config: Config) {
   initAuth(config)
+  const scheduler = createScheduler(config)
 
   const upstream = new URL(config.upstream.url)
   const useTls = config.server.tls?.cert && config.server.tls?.key
   const proxyAgent = getProxyAgent()
 
   const handler = (req: IncomingMessage, res: ServerResponse) => {
-    handleRequest(req, res, config, upstream, proxyAgent)
+    handleRequest(req, res, config, upstream, proxyAgent, scheduler)
   }
 
   let server
@@ -49,6 +51,7 @@ async function handleRequest(
   config: Config,
   upstream: URL,
   proxyAgent?: ReturnType<typeof getProxyAgent>,
+  scheduler = createScheduler(config),
 ) {
   const method = req.method || 'GET'
   const path = req.url || '/'
@@ -65,6 +68,7 @@ async function handleRequest(
       canonical_platform: config.env.platform,
       upstream: config.upstream.url,
       clients: config.auth.tokens.map(t => t.name),
+      scheduler: scheduler.snapshot(),
     }))
     return
   }
@@ -107,6 +111,13 @@ async function handleRequest(
     chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
   }
   let body = Buffer.concat(chunks)
+  const lease = scheduler.beginRequest({
+    client_name: clientName,
+    method,
+    path,
+    headers: req.headers,
+    body,
+  })
 
   const inboundUserAgent = req.headers['user-agent']
   if (typeof inboundUserAgent === 'string') {
@@ -190,6 +201,10 @@ async function handleRequest(
       // Stream response directly (SSE for Claude responses)
       proxyRes.pipe(res)
 
+      proxyRes.on('end', () => {
+        lease.complete(status)
+      })
+
       if (config.logging.audit) {
         audit(clientName, method, path, status)
       }
@@ -197,6 +212,7 @@ async function handleRequest(
   )
 
   proxyReq.on('error', (err) => {
+    lease.fail(502, err)
     log('error', `Upstream error: ${err.message}`)
     if (!res.headersSent) {
       res.writeHead(502, { 'Content-Type': 'application/json' })
