@@ -314,10 +314,39 @@
     - quiet mode 的“本就不该发”
     - alignment mode 的“应该发但没有抓到”
 
+### A-014 transport ownership 分层
+
+- 日期：2026-04-03
+- 证据：
+  - [oauth.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/constants/oauth.ts)
+  - [growthbook.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/growthbook.ts)
+  - [firstPartyEventLoggingExporter.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/firstPartyEventLoggingExporter.ts)
+  - [metricsOptOut.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/metricsOptOut.ts)
+  - [officialRegistry.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/mcp/officialRegistry.ts)
+  - [filesApi.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/filesApi.ts)
+- 当前差异：
+  - 之前我们容易把“没经过 gateway”的请求和“gateway 没改写”的请求混在一起。
+  - 参考源码已经说明，请求至少分三类：
+    - 归 gateway 主链的
+    - 默认直连 first-party host 的
+    - 被 quiet/custom-base-url 直接裁掉的
+- 处理动作：
+  - 新增 [transport-surface-map.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/transport-surface-map.md)
+  - 把已确认路径按 transport ownership 分类，后续自动 diff 先按归属分桶
+- 回归验证：
+  - 源码已确认：
+    - Files API 会优先吃 `ANTHROPIC_BASE_URL`
+    - GrowthBook 默认直指 `https://api.anthropic.com/`
+    - 1P event logging 默认直指 `https://api.anthropic.com`
+    - metrics opt-out 和 official MCP registry 也有 direct-host 路径
+- 剩余风险：
+  - `BASE_API_URL` 系列控制面路径还要继续细分哪些是“允许自定义 OAuth base”与哪些是“始终 prod/staging”
+  - 后续抓包要验证这些源码结论在当前版本里是否都还成立
+
 ## 下一步优先级
 
 1. 在 `alignment mode` 下重新抓取 direct CLI 与 gateway 上游流量
 2. 逐项核对 `/v1/messages`、`/api/eval/*`、`/api/event_logging/*`
-3. 把“直连 `api.anthropic.com` 的 side channel”单独建模，不再误算成 gateway 漏改写
+3. 用 transport ownership 地图继续细分 `BASE_API_URL` 控制面
 4. 根据抓包差异继续补头部、body 和控制面请求
 5. 评估 persona 分组策略，而不是把所有账号都压成同一个静态模板

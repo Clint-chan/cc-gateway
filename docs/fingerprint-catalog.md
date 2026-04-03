@@ -323,11 +323,11 @@
 2. 让 gateway 的 `network.proxy_url` 指向 mitm
 3. 让 mitm 上游再走 `10808`
 4. 如果要验证 eval / 1P event logging，客户端不能开 quiet mode
-4. 对比：
+5. 对比：
    - `claude-cli.log`
    - `gateway.log`
-5. 读 `gateway.log` 时只看最后一次请求，不要把历史抓包行误判成当前结果
-6. 如果要解析 `.flows`，先停止 `mitmdump`，再运行提取或 diff 脚本
+6. 读 `gateway.log` 时只看最后一次请求，不要把历史抓包行误判成当前结果
+7. 如果要解析 `.flows`，先停止 `mitmdump`，再运行提取或 diff 脚本
 
 ### 方法三：对照参考源码
 
@@ -348,3 +348,9 @@
 - 一个 persona 对应哪些 telemetry 字段
 - 一个 persona 对应哪些抓包证据
 - 一次升级后哪些地方需要重新验证
+
+同时还要把每个 endpoint 的 transport ownership 单独管理。
+
+参考：
+
+- [transport-surface-map.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/transport-surface-map.md)

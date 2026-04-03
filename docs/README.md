@@ -30,6 +30,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [client-modes.md](./client-modes.md)
   Separation between quiet production mode and alignment research mode for Claude Code clients.
 
+- [transport-surface-map.md](./transport-surface-map.md)
+  Map of which requests belong to the gateway mainline, which bypass to first-party hosts, and which are gated off by mode.
+
 - [packet-alignment-log.md](./packet-alignment-log.md)
   Single running log for every telemetry, header, and body alignment fix against captured first-party Claude Code traffic.
 
