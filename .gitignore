@@ -9,6 +9,8 @@ certs/
 /reference
 *.out.log
 *.err.log
+runtime/
+artifacts/
 mitm/__pycache__/
 mitm/gateway.flows
 mitm/gateway.log

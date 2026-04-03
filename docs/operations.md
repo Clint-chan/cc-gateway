@@ -61,6 +61,8 @@ Review these values as well and adjust if needed:
 - `env.*`
 - `prompt_env.*`
 - `process.*`
+- `logging.file`
+- `logging.audit_file`
 
 ## Local Docker Deployment
 
@@ -92,6 +94,11 @@ This is more reliable than assuming the Node runtime inside Docker will automati
 ```powershell
 docker compose logs -f gateway
 ```
+
+If you enable file logging, runtime logs are written under:
+
+- `runtime/logs/gateway.log`
+- `runtime/logs/audit.log`
 
 Expected startup flow:
 

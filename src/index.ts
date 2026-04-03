@@ -1,5 +1,5 @@
 import { loadConfig } from './config.js'
-import { setLogLevel, log } from './logger.js'
+import { initLogger, log } from './logger.js'
 import { initOAuth } from './oauth.js'
 import { startProxy } from './proxy.js'
 import { setProxyUrl } from './net.js'
@@ -8,7 +8,7 @@ const configPath = process.argv[2]
 
 try {
   const config = loadConfig(configPath)
-  setLogLevel(config.logging.level)
+  initLogger(config.logging)
   setProxyUrl(config.network?.proxy_url)
 
   log('info', 'CC Gateway starting...')

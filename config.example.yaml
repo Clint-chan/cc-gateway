@@ -105,3 +105,5 @@ process:
 logging:
   level: info  # debug | info | warn | error
   audit: true  # log which client made each request
+  file: ./runtime/logs/gateway.log
+  audit_file: ./runtime/logs/audit.log

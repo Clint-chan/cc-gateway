@@ -125,7 +125,7 @@ tests/
   fixtures/
 ```
 
-当前仓库只有单个 [rewriter.test.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/tests/rewriter.test.ts)，后续新增测试不要再直接平铺到 `tests/` 根下。
+当前单测已经迁到 [rewriter.test.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/tests/unit/rewriter.test.ts)，后续新增测试不要再直接平铺到 `tests/` 根下。
 
 ### `mitm/`
 
@@ -192,6 +192,11 @@ artifacts/
 - `mitm/`：只保留研究工具和必要样例，不承载所有生成物
 
 现阶段可以先不迁目录，但新增工具不要继续往根目录吐新的 `*.log`。
+
+当前运行日志推荐直接落到：
+
+- `runtime/logs/gateway.log`
+- `runtime/logs/audit.log`
 
 ## 近期推荐结构
 

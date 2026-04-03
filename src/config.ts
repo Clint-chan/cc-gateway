@@ -59,6 +59,8 @@ export type Config = {
   logging: {
     level: 'debug' | 'info' | 'warn' | 'error'
     audit: boolean
+    file?: string
+    audit_file?: string
   }
 }
 

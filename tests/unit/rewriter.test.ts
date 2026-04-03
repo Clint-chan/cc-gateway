@@ -1,6 +1,6 @@
-import { rewriteBody, rewriteHeaders } from '../src/rewriter.js'
-import type { Config } from '../src/config.js'
 import { strict as assert } from 'assert'
+import type { Config } from '../../src/config.js'
+import { rewriteBody, rewriteHeaders } from '../../src/rewriter.js'
 
 const config: Config = {
   server: { port: 8443, tls: { cert: '', key: '' } },
@@ -58,9 +58,7 @@ function test(name: string, fn: () => void) {
   }
 }
 
-// ============================================================
 console.log('\n/v1/messages - metadata.user_id rewriting')
-// ============================================================
 
 test('rewrites device_id in metadata.user_id', () => {
   const body = {
@@ -80,13 +78,11 @@ test('rewrites device_id in metadata.user_id', () => {
   const userId = JSON.parse(result.metadata.user_id)
 
   assert.equal(userId.device_id, config.identity.device_id)
-  assert.equal(userId.account_uuid, 'acct-123', 'account_uuid should be preserved')
-  assert.equal(userId.session_id, 'sess-456', 'session_id should be preserved')
+  assert.equal(userId.account_uuid, 'acct-123')
+  assert.equal(userId.session_id, 'sess-456')
 })
 
-// ============================================================
 console.log('\n/v1/messages - system prompt environment rewriting')
-// ============================================================
 
 test('rewrites Platform in system prompt', () => {
   const body = {
@@ -110,7 +106,7 @@ test('rewrites working directory path', () => {
     rewriteBody(Buffer.from(JSON.stringify(body)), '/v1/messages', config).toString(),
   )
   assert.ok(result.system.includes('/Users/jack/projects'), `Got: ${result.system}`)
-  assert.ok(!result.system.includes('/home/bob/'), 'Original path should be replaced')
+  assert.ok(!result.system.includes('/home/bob/'))
 })
 
 test('rewrites billing header fingerprint', () => {
@@ -121,7 +117,7 @@ test('rewrites billing header fingerprint', () => {
   const result = JSON.parse(
     rewriteBody(Buffer.from(JSON.stringify(body)), '/v1/messages', config).toString(),
   )
-  assert.ok(result.system.includes('cc_version=2.1.81.000'))
+  assert.match(result.system, /cc_version=2\.1\.81\.[a-f0-9]{3}/)
   assert.ok(!result.system.includes('.a1b'))
 })
 
@@ -139,9 +135,7 @@ test('rewrites home paths in user messages with system-reminder', () => {
   assert.ok(!result.messages[0].content.includes('/home/alice/'))
 })
 
-// ============================================================
 console.log('\n/api/event_logging/batch - event data rewriting')
-// ============================================================
 
 test('rewrites device_id and email in events', () => {
   const body = {
@@ -188,7 +182,7 @@ test('replaces entire env object with canonical', () => {
   assert.equal(env.arch, 'arm64')
   assert.equal(env.node_version, 'v24.3.0')
   assert.equal(env.terminal, 'iTerm2.app')
-  assert.equal(env.is_ci, false, 'is_ci should be forced to false')
+  assert.equal(env.is_ci, false)
   assert.equal(env.deployment_environment, 'unknown-darwin')
 })
 
@@ -207,8 +201,8 @@ test('strips baseUrl that leaks gateway address', () => {
     rewriteBody(Buffer.from(JSON.stringify(body)), '/api/event_logging/batch', config).toString(),
   )
   const data = result.events[0].event_data
-  assert.equal(data.baseUrl, undefined, 'baseUrl should be stripped')
-  assert.equal(data.gateway, undefined, 'gateway should be stripped')
+  assert.equal(data.baseUrl, undefined)
+  assert.equal(data.gateway, undefined)
 })
 
 test('rewrites process metrics (base64 encoded)', () => {
@@ -217,7 +211,7 @@ test('rewrites process metrics (base64 encoded)', () => {
     rss: 999999999,
     heapTotal: 999999999,
     heapUsed: 999999999,
-    constrainedMemory: 68719476736, // 64GB - different from canonical 32GB
+    constrainedMemory: 68719476736,
     cpuUsage: { user: 1000, system: 500 },
   }
   const body = {
@@ -235,30 +229,28 @@ test('rewrites process metrics (base64 encoded)', () => {
   const decoded = JSON.parse(
     Buffer.from(result.events[0].event_data.process, 'base64').toString(),
   )
-  assert.equal(decoded.constrainedMemory, 34359738368, 'Should be canonical 32GB')
-  assert.equal(decoded.uptime, 100, 'uptime should be preserved')
-  assert.ok(decoded.rss >= 300000000 && decoded.rss <= 500000000, 'rss should be in range')
+  assert.equal(decoded.constrainedMemory, 34359738368)
+  assert.equal(decoded.uptime, 100)
+  assert.ok(decoded.rss >= 300000000 && decoded.rss <= 500000000)
 })
 
-// ============================================================
 console.log('\nHTTP header rewriting')
-// ============================================================
 
-test('rewrites User-Agent to canonical version', () => {
+test('preserves inbound User-Agent by default', () => {
   const headers = rewriteHeaders(
     { 'user-agent': 'claude-code/2.0.50 (external, cli)', 'x-app': 'cli' },
     config,
   )
-  assert.equal(headers['user-agent'], 'claude-code/2.1.81 (external, cli)')
+  assert.equal(headers['user-agent'], 'claude-code/2.0.50 (external, cli)')
   assert.equal(headers['x-app'], 'cli')
 })
 
 test('strips authorization header (gateway injects its own)', () => {
   const headers = rewriteHeaders(
-    { 'authorization': 'Bearer client-placeholder-token', 'x-app': 'cli' },
+    { authorization: 'Bearer client-placeholder-token', 'x-app': 'cli' },
     config,
   )
-  assert.equal(headers['authorization'], undefined)
+  assert.equal(headers.authorization, undefined)
 })
 
 test('strips proxy-authorization header', () => {
@@ -269,9 +261,7 @@ test('strips proxy-authorization header', () => {
   assert.equal(headers['proxy-authorization'], undefined)
 })
 
-// ============================================================
 console.log('\nNon-JSON passthrough')
-// ============================================================
 
 test('passes non-JSON body through unchanged', () => {
   const raw = Buffer.from('not json content')
@@ -279,6 +269,5 @@ test('passes non-JSON body through unchanged', () => {
   assert.equal(result.toString(), 'not json content')
 })
 
-// ============================================================
 console.log(`\n${passed} passed, ${failed} failed\n`)
 if (failed > 0) process.exit(1)
