@@ -175,6 +175,18 @@ It does not yet reject or queue requests, but it gives the runtime, future contr
 
 The runtime now also exposes a small enforcement hook above that advisory layer.
 
+Current runtime boundary:
+
+- scheduler computes state and previews admission
+- admission policy decides whether a configured enforcement mode should reject
+- proxy only applies the evaluated result
+
+This boundary now lives in:
+
+- [scheduler.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/src/scheduler.ts)
+- [admission-policy.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/src/admission-policy.ts)
+- [proxy.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/src/proxy.ts)
+
 Config shape:
 
 ```yaml

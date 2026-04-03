@@ -92,6 +92,7 @@
 - 请求改写
 - upstream 转发
 - runtime logger
+- scheduler / admission policy 模块
 
 当前不应该放：
 

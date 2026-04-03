@@ -52,7 +52,7 @@ What is still missing:
 
 - production-grade TLS story
 - long-run soak validation
-- explicit runtime modular boundaries in code layout
+- broader runtime modular boundaries beyond the new scheduler/admission split
 
 ### 2. Research / Counter-Detection Layer
 
