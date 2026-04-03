@@ -163,7 +163,16 @@
   trusted capture workspace 下的 `claude -p "hello"` 已抓到：
   - `GET /api/claude_code_grove`
   - `GET /api/oauth/account/settings`
-  当前 via-gateway 双通道最小请求里，这两条本轮未出现
+  当前 via-gateway 双通道最小请求里，这两条不会按普通 side channel 逻辑出现
+- 当前结论：
+  当前 via-gateway 的两种 auth mode 都会先把 Grove consumer-subscriber gating 裁掉，因此这两条面应归为：
+  - `gated-surface`
+  - `auth-mode-sensitive`
+  - 当前状态：`auth-model-suppressed`
+- 备注：
+  这两条面不是简单的 “not-observed”。
+  详细说明看：
+  - [grove-control-plane-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/grove-control-plane-gating.md)
 
 #### 3.3 usage / referral / overage credit grant / admin requests
 
@@ -254,6 +263,9 @@ CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
   - GrowthBook attributes
   - 一部分 first-party side channel 触发条件
 - `CLAUDE_CODE_OAUTH_TOKEN + ANTHROPIC_CUSTOM_HEADERS=x-api-key: ...` 则更接近 first-party subscriber/OAuth 叙事
+- 但要注意：
+  `CLAUDE_CODE_OAUTH_TOKEN` 在客户端内部仍然会被视为 inference-only env token，`subscriptionType = null`。
+  所以它不是完整的 local subscriber 会话，像 Grove 这类要求 `isConsumerSubscriber()` 的控制面仍会被 auth model 裁掉。
 
 auth-mode-sensitive 的具体控制面矩阵，统一看：
 

@@ -47,7 +47,7 @@
 
 ### 2. Transport / Telemetry 事实层
 
-完成度：`86%`
+完成度：`88%`
 
 已完成：
 
@@ -67,6 +67,7 @@
     - `RepeatCount=3`、`5` 已重新看到 `/api/event_logging/v2/batch`
 - 已确认 `NO_PROXY=localhost,127.0.0.1` 是双通道 workflow 的硬条件
 - 已确认 `auth mode` 是独立于 `traffic mode` 的第二个高优先级变量
+- 已确认 Grove / account settings 在当前 via-gateway 两种 auth mode 下属于 `auth-model-suppressed`，不是简单的 “not-observed”
 
 未完成：
 
@@ -77,7 +78,7 @@
 
 ### 3. 方法论与可维护性
 
-完成度：`94%`
+完成度：`95%`
 
 已完成：
 

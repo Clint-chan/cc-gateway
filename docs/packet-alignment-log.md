@@ -26,6 +26,36 @@
 
 ## 对齐记录
 
+### A-000 Grove 控制面 auth gating 冻结
+
+- 日期：2026-04-03
+- 证据：
+  - [grove.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/grove.ts)
+  - [auth.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/auth.ts)
+  - [grove-control-plane-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/grove-control-plane-gating.md)
+- 当前差异：
+  - trusted direct 的 local subscriber 会话曾经抓到：
+    - `/api/claude_code_grove`
+    - `/api/oauth/account/settings`
+  - 但 trusted via-gateway 的 `managed-oauth` / `external-auth-token` 一直看不到这两条面。
+  - 之前这两行还只能先记成 “not-observed”。
+- 处理动作：
+  - 重新对照参考源码，冻结了 Grove 的 auth gating：
+    - `CLAUDE_CODE_OAUTH_TOKEN` 会被客户端视为 inference-only token，`subscriptionType = null`
+    - `isConsumerSubscriber()` 要求 `subscriptionType in { max, pro }`
+    - `ANTHROPIC_AUTH_TOKEN` 直接切到 external auth token 路径
+  - 因此当前 via-gateway 两种 auth mode 下，Grove 控制面统一改记为：
+    - `auth-model-suppressed`
+  - 同时补了两个研究辅助脚本：
+    - [inspect-auth-gating-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-auth-gating-state.ps1)
+    - [clear-grove-cache.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/clear-grove-cache.ps1)
+- 回归验证：
+  - 清掉本机 `groveConfigCache` 后再次跑 trusted via-gateway `managed-oauth`，Grove 控制面仍未重新出现，而且本地也没有重新写回 `groveConfigCache`
+  - 这证明当前 via-gateway 缺失 Grove 的根因不是缓存短路，而是 auth model 本身
+- 剩余风险：
+  - 如果未来 Claude Code 改写了 env token 的 subscription 语义，这个结论需要重新复核
+  - 目前这条结论只冻结到当前版本和当前接入模型，不代表 future subscriber-managed gateway 一定无法恢复 Grove 面
+
 ### A-001 显式代理链路
 
 - 日期：2026-04-03

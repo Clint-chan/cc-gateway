@@ -71,6 +71,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\prepare-trusted-capture-works
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\inspect-growthbook-state.ps1 -CurrentPath "$env:USERPROFILE\cc-alignment-capture\trusted-eval"
+powershell -ExecutionPolicy Bypass -File .\scripts\inspect-auth-gating-state.ps1
 ```
 
 重点看三项：
@@ -78,6 +79,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\inspect-growthbook-state.ps1 
 - `current_project_key`
 - `current_project_trust`
 - `cached_feature_count`
+
+再补看四项：
+
+- `effective_auth_mode`
+- `effective_subscription_type`
+- `is_consumer_subscriber`
+- `expected_grove_state`
 
 ### 3. 开始 MITM 抓包
 
@@ -234,7 +242,14 @@ python mitm\summarize_control_plane_matrix.py --mode-label managed-oauth-combine
 - `ANTHROPIC_AUTH_TOKEN` 与 `CLAUDE_CODE_OAUTH_TOKEN` 不只是“不同写法”，而是会切换客户端的 subscriber / OAuth 叙事
 - `/api/eval/*` 是否出现，已经确认会受 auth mode 直接影响
 - `/api/event_logging/*` 在 `managed-oauth` 下不是完全不发，而是明显受批处理时序影响；当前 threshold sweep 已确认 `1`、`2` 不稳定，`3`、`5` 可重现
+- Grove / account settings 当前不应继续按 via-gateway “未观测”理解；参考源码和本地验证都说明，当前两种 via-gateway auth mode 会先把 consumer-subscriber Grove gating 裁掉
 - auth-mode-sensitive 的当前基线，统一收口到 [auth-mode-control-plane-matrix.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/auth-mode-control-plane-matrix.md)
+
+如果当前目标是专门重现 Grove 面，先看：
+
+- [grove-control-plane-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/grove-control-plane-gating.md)
+
+不要继续直接在 via-gateway `managed-oauth` 上把 Grove 缺失当作抓包失败。
 
 ## 维护规则
 

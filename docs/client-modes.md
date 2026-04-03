@@ -41,6 +41,9 @@
   - `ANTHROPIC_CUSTOM_HEADERS=x-api-key: <gateway-client-token>`
 - 结论：
   这是当前研究默认模式，也是后续对外接入的推荐默认值
+- 重要边界：
+  这条模式保留的是 first-party OAuth 叙事，不等于完整 local subscriber 会话。
+  参考源码里，`CLAUDE_CODE_OAUTH_TOKEN` 会被视为 inference-only env token，`subscriptionType = null`，所以某些要求 `isConsumerSubscriber()` 的控制面不会再出现。
 
 ### external-auth-token
 
@@ -91,6 +94,7 @@
 - 1P event logging 不再发送
 - bootstrap、metrics opt-out、grove 等非必要控制面请求也会被压掉或收缩
 - 客户端仍然保留 first-party OAuth / subscriber 叙事，不会因为接入模型本身切到外部 token 路径
+- 但这不等于所有 subscriber-only 控制面都能保留。像 Grove 这类要求 consumer plan 的控制面，当前 via-gateway `managed-oauth` 仍会被 auth model 裁掉
 
 ### 结论
 
@@ -128,6 +132,7 @@
 - 但它们不一定跟随 `ANTHROPIC_BASE_URL`
 - 其中一部分会继续直指 `api.anthropic.com`
 - trusted `via-gateway` 双通道里，`managed-oauth` 已重新抓到 `POST /api/eval/sdk-*`
+- 但 Grove / account settings 这两条面当前不应按 “没抓到” 理解，而应按 auth-model-suppressed 理解
 
 ### 额外要求
 
@@ -182,6 +187,7 @@
 - [http.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/http.ts)
 - [user.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/user.ts)
 - [growthbook.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/growthbook.ts)
+- [grove-control-plane-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/grove-control-plane-gating.md)
 
 ### custom base URL 还会裁掉一部分 first-party 控制面
 

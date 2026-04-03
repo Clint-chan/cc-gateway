@@ -45,6 +45,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [event-logging-threshold-workflow.md](./event-logging-threshold-workflow.md)
   Repeatable workflow for measuring the minimum trigger threshold of 1P event logging.
 
+- [grove-control-plane-gating.md](./grove-control-plane-gating.md)
+  Frozen explanation for why Grove control-plane surfaces disappear under current via-gateway auth models, and how to distinguish auth suppression from capture failure.
+
 - [packet-alignment-log.md](./packet-alignment-log.md)
   Single running log for every telemetry, header, and body alignment fix against captured first-party Claude Code traffic.
 

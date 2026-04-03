@@ -38,6 +38,8 @@
 - [finalize-gateway-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-gateway-capture.ps1)
 - [finalize-direct-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-direct-capture.ps1)
 - [inspect-growthbook-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-growthbook-state.ps1)
+- [inspect-auth-gating-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-auth-gating-state.ps1)
+- [clear-grove-cache.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/clear-grove-cache.ps1)
 - [prepare-trusted-capture-workspace.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/prepare-trusted-capture-workspace.ps1)
 - [probe-growthbook-eval-direct.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-growthbook-eval-direct.ps1)
 - [extract_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/extract_signals.py)
@@ -235,6 +237,32 @@
   - [inspect-growthbook-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-growthbook-state.ps1)
 - 后续更新方式：
   需要专门复抓一轮带 eval 的请求，核对 gateway 实际出站体
+
+#### 3.2 Grove 控制面
+
+- 作用：
+  consumer subscriber 的隐私设置和 notice config 控制面
+- 真实来源：
+  [grove.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/grove.ts)
+  [print.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/cli/print.ts)
+  [auth.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/auth.ts)
+- 相关 endpoint：
+  - `/api/oauth/account/settings`
+  - `/api/claude_code_grove`
+- 当前策略：
+  不把它继续当作 via-gateway 的普通“未观测面”，而是先按 auth model 判断是否应当存在
+- 当前结论：
+  - trusted direct + local Claude.ai subscriber 会话可以看到这两条面
+  - trusted via-gateway 的 `managed-oauth` / `external-auth-token` 当前都属于 `auth-model-suppressed`
+- 快速检查：
+  - [inspect-auth-gating-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-auth-gating-state.ps1)
+  - [inspect-growthbook-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-growthbook-state.ps1)
+- 冷缓存辅助：
+  - [clear-grove-cache.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/clear-grove-cache.ps1)
+- 详细说明：
+  - [grove-control-plane-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/grove-control-plane-gating.md)
+- 后续更新方式：
+  以后 Grove 再次出现或消失时，先跑 auth gating 检查，再决定是否做冷缓存复抓
 
 ### 4. 1P event logging 层
 

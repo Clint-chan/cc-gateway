@@ -59,8 +59,8 @@
 | `/api/claude_code_penguin_mode` | 是 | 否 | 否 | 否 | `direct-host-side-channel` | 当前最小 via-gateway 路径里，只在 `external-auth-token` 下出现 |
 | `/v1/mcp_servers` | 是 | 否 | 否 | 否 | `direct-host-side-channel` | 当前最小 via-gateway 路径里，只在 `external-auth-token` 下出现 |
 | `/mcp-registry/v0/servers` | 是 | 否 | 是 | 否 | `direct-host-side-channel` | 两种 auth mode 下都能出现，但仍不经过 gateway 上游 |
-| `/api/oauth/account/settings` | 否 | 否 | 否 | 否 | `not-observed` | 当前 via-gateway 最小 probe 里还没重新看到，不能据此认定已消失 |
-| `/api/claude_code_grove` | 否 | 否 | 否 | 否 | `not-observed` | 当前 via-gateway 最小 probe 里还没重新看到，不能据此认定已消失 |
+| `/api/oauth/account/settings` | 否 | 否 | 否 | 否 | `auth-model-suppressed` | 这条面依赖 Grove consumer-subscriber gating；当前两种 via-gateway auth mode 都不满足 |
+| `/api/claude_code_grove` | 否 | 否 | 否 | 否 | `auth-model-suppressed` | 当前缺失不是单纯未观测，而是 auth model 先把 Grove 资格检查裁掉了 |
 | `/api/event_logging/v2/batch` | 否 | 否 | 否 | 否 | `not-observed` | 单次最小 probe 不足以稳定触发 |
 
 ### timing 补充：managed-oauth 阈值扫面
@@ -76,6 +76,26 @@
 
 - `RepeatCount=2` 过去曾有一次命中记录，但最新 sweep 已证明它不是稳定阈值
 - `event_logging` 的专项阈值方法统一看 [event-logging-threshold-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-threshold-workflow.md)
+
+### Grove 说明
+
+`/api/oauth/account/settings` 和 `/api/claude_code_grove` 需要单独理解。
+
+当前 via-gateway 两种 auth mode 的客户端身份分别是：
+
+- `external-auth-token`
+  走 external auth token 路径，不再是 Claude.ai subscriber 叙事
+- `managed-oauth`
+  依赖 `CLAUDE_CODE_OAUTH_TOKEN`，而参考源码会把它当作 inference-only token，`subscriptionType = null`
+
+而 Grove 资格检查要求 `isConsumerSubscriber()` 成立，所以：
+
+- 这两条面当前不应该继续记成“未观测”
+- 应明确归为 `auth-model-suppressed`
+
+详细依据看：
+
+- [grove-control-plane-gating.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/grove-control-plane-gating.md)
 
 ## 为什么要单独冻成矩阵
 
