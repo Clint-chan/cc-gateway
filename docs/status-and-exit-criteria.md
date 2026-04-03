@@ -47,7 +47,7 @@
 
 ### 2. Transport / Telemetry 事实层
 
-完成度：`78%`
+完成度：`82%`
 
 已完成：
 
@@ -60,13 +60,15 @@
 - trusted `via-gateway` 双通道 workflow 已落地并跑通
 - 已确认 `via-gateway` 最小请求里：
   - gateway 上游稳定看到 `/v1/messages`
-  - direct side-channel 稳定看到 `/v1/mcp_servers`、`/api/claude_cli/bootstrap`、`/api/claude_code_penguin_mode`、`/mcp-registry`
+  - `external-auth-token` 下 direct side-channel 稳定看到 `/v1/mcp_servers`、`/api/claude_cli/bootstrap`、`/api/claude_code_penguin_mode`、`/mcp-registry`
+  - `managed-oauth` 下 direct side-channel 已重新看到 `/api/eval/sdk-*`
 - 已确认 `NO_PROXY=localhost,127.0.0.1` 是双通道 workflow 的硬条件
+- 已确认 `auth mode` 是独立于 `traffic mode` 的第二个高优先级变量
 
 未完成：
 
-- trusted `via-gateway` 对照还没把 `/api/eval/*` 与 `/api/event_logging/*` 收干净
-- `/api/eval/*` 在 gateway 场景下的 ownership 和改写效果还没定性
+- trusted `via-gateway` 对照还没把 `/api/event_logging/*` 收干净
+- `/api/eval/*` 在 gateway 场景下已经重新确认为 direct side-channel，但相关字段矩阵还没完全冻结
 - `event_logging` 在 trusted workflow 下的时序和 gating 还没彻底验掉
 - `remote-control` 为什么会在更早阶段结束，还没拆完
 
@@ -210,15 +212,16 @@
 目标：
 
 - 用 trusted workspace + gateway + MITM
-- 复抓 `/api/eval/*` 和控制面 side channel
+- 跑完 `managed-oauth` 与 `external-auth-token` 两条接入模型
 - 直接回答“这些链路在 gateway 场景下到底怎么走”
 
 当前进展：
 
 - 主链与一部分 direct side channel 已拆开
+- `/api/eval/*` 已确认会受 auth mode 直接影响
 - 当前剩余重点只剩：
-  - `/api/eval/*`
   - `/api/event_logging/*`
+  - auth-mode-sensitive 控制面矩阵冻结
 
 ### T2. event logging 的 trusted 时序复抓
 

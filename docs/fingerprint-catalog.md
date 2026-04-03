@@ -70,7 +70,30 @@
 - 结果：
   遥测面会重新暴露，但其中一部分仍可能直连 `api.anthropic.com`
 
-如果没有先声明当前抓包属于哪种模式，这份目录里的很多结论都会被误读。
+### managed-oauth
+
+- 目标：
+  保留 first-party OAuth / subscriber 叙事
+- 关键要求：
+  - `CLAUDE_CODE_OAUTH_TOKEN=gateway-managed`
+  - `ANTHROPIC_CUSTOM_HEADERS=x-api-key: <gateway-client-token>`
+- 结果：
+  更接近真实 Claude.ai subscriber 的 telemetry 面
+
+### external-auth-token
+
+- 目标：
+  把 gateway token 直接塞进 `ANTHROPIC_AUTH_TOKEN`
+- 结果：
+  客户端会转到 external auth token 路径
+- 当前结论：
+  这条路径会改变：
+  - `isClaudeAISubscriber()`
+  - OAuth account 信息
+  - GrowthBook attributes
+  - 一部分 side channel 是否出现
+
+如果没有先声明当前抓包属于哪种 `traffic mode` 和 `auth mode`，这份目录里的很多结论都会被误读。
 
 ## 信号面目录
 
@@ -206,6 +229,8 @@
   - 详见 [growthbook-eval-investigation.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/growthbook-eval-investigation.md)
 - 模式注意：
   `quiet mode` 下这一路本来就不会发，只有 `alignment mode` 才适合验证
+- auth 注意：
+  `managed-oauth` 与 `external-auth-token` 会直接改变这一路是否出现
 - 快速检查：
   - [inspect-growthbook-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-growthbook-state.ps1)
 - 后续更新方式：
@@ -262,6 +287,21 @@
   `quiet mode` 下 1P event logging 会被 privacy level 直接关闭
 
 ### 5. 控制面与功能开关
+
+#### 5.0 认证模型本身
+
+- 作用：
+  决定 CLI 到底按 first-party OAuth subscriber 叙事发请求，还是按 external auth token 叙事发请求
+- 参考位置：
+  - [auth.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/auth.ts)
+  - [http.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/http.ts)
+  - [user.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/user.ts)
+- 当前状态：
+  已确认 `ANTHROPIC_AUTH_TOKEN` 与 `CLAUDE_CODE_OAUTH_TOKEN` 会导致不同 side-channel 面
+- 当前策略：
+  - 研究默认：`managed-oauth`
+  - 生产默认：`quiet + managed-oauth`
+  - `external-auth-token` 仅作专项实验
 
 #### 5.1 /api/claude_cli/bootstrap
 

@@ -96,9 +96,11 @@
 - 当前判断：
   `/api/eval/*` 仍然是活的 direct-host side channel；默认 cwd 抓不到，不代表它不存在
 - 当前 via-gateway 补充结论：
-  在 trusted workspace + custom base URL 的双通道最小请求里，这一路本轮没有出现
+  在 trusted workspace + custom base URL 的双通道最小请求里：
+  - `managed-oauth` 会重新出现 `/api/eval/sdk-*`
+  - `external-auth-token` 不会出现 `/api/eval/*`
 - 备注：
-  这更像 custom base URL 研究路径下的 gating / 时序问题，不能直接推导成“gateway 已经接管了 eval”
+  这说明 `/api/eval/*` 不只是受 traffic mode 和时序影响，也受 auth mode 影响
 
 #### 2.2 1P event logging
 
@@ -229,11 +231,33 @@ CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 - [remoteManagedSettings/syncCache.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/remoteManagedSettings/syncCache.ts)
 - [settingsSync/index.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/settingsSync/index.ts)
 
+### auth model gating
+
+如果客户端使用不同的 auth mode，同一条 custom base URL 路径也可能表现出完全不同的行为面。
+
+参考：
+
+- [auth.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/auth.ts)
+- [http.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/http.ts)
+- [user.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/user.ts)
+- [growthbook.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/growthbook.ts)
+
+当前已确认：
+
+- `ANTHROPIC_AUTH_TOKEN` 会被官方客户端视为 external auth token
+- 这会让 `isAnthropicAuthEnabled()` 返回 `false`
+- 从而改变：
+  - `isClaudeAISubscriber()`
+  - OAuth account 信息可见性
+  - GrowthBook attributes
+  - 一部分 first-party side channel 触发条件
+- `CLAUDE_CODE_OAUTH_TOKEN + ANTHROPIC_CUSTOM_HEADERS=x-api-key: ...` 则更接近 first-party subscriber/OAuth 叙事
+
 ## 对我们项目的含义
 
 ### 如果目标是实际使用
 
-优先用 `quiet mode`。
+优先用 `quiet + managed-oauth`。
 
 这时真正要保住的是：
 
@@ -245,7 +269,7 @@ CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 
 ### 如果目标是研究最新 first-party 遥测
 
-必须用 `alignment mode`，并额外控制：
+必须用 `alignment + managed-oauth`，并额外控制：
 
 - 系统代理
 - MITM
@@ -260,5 +284,10 @@ CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 1. `gateway-mainline`
 2. `direct-host-side-channel`
 3. `gated-surface`
+
+然后再补两个上下文标签：
+
+4. `traffic-mode-sensitive`
+5. `auth-mode-sensitive`
 
 只有先归类，后面的 diff 和改写策略才不会乱。

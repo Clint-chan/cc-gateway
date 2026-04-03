@@ -184,7 +184,7 @@ Select-String -Path mitm\direct.log -Pattern '/api/eval/|v1/mcp_servers|claude_c
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\capture-dual-via-gateway.ps1
-powershell -ExecutionPolicy Bypass -File .\scripts\probe-trusted-via-gateway.ps1 -EnableDirectMitm
+powershell -ExecutionPolicy Bypass -File .\scripts\probe-trusted-via-gateway.ps1 -EnableDirectMitm -AuthMode managed-oauth
 powershell -ExecutionPolicy Bypass -File .\scripts\finalize-dual-via-gateway.ps1 -StopGateway
 ```
 
@@ -198,23 +198,37 @@ powershell -ExecutionPolicy Bypass -File .\scripts\finalize-dual-via-gateway.ps1
 
 ### 当前已确认的双通道结果
 
-在 trusted workspace + custom base URL + `NO_PROXY=localhost,127.0.0.1` 的当前最小请求里：
+在 trusted workspace + custom base URL + `NO_PROXY=localhost,127.0.0.1` 的当前最小请求里，必须再区分 auth mode：
 
-- gateway 上游只稳定看到：
+#### external-auth-token
+
+- gateway 上游稳定看到：
   - `POST /v1/messages?beta=true`
 - direct side-channel MITM 看到：
   - `GET /v1/mcp_servers`
   - `GET /api/claude_cli/bootstrap`
   - `GET /api/claude_code_penguin_mode`
   - `GET /mcp-registry/v0/servers`
-- 本轮双通道里没有看到：
+- 本轮没有看到：
   - `/api/eval/*`
+  - `/api/event_logging/*`
+
+#### managed-oauth
+
+- gateway 上游稳定看到：
+  - `POST /v1/messages?beta=true`
+- direct side-channel MITM 看到：
+  - `POST /api/eval/sdk-*`
+  - `GET /mcp-registry/v0/servers`
+- 当前这轮没有看到：
   - `/api/event_logging/*`
 
 这说明：
 
-- 最小 via-gateway 请求里，主链和一部分 side channel 已经可以被明确拆开
-- 但 `/api/eval/*` 与 `event_logging` 在 custom base URL 研究路径下仍然受额外 gating 或时序影响，不能因为这一轮缺失就认定为彻底不存在
+- 最小 via-gateway 请求里，主链和 side channel 已经可以被明确拆开
+- `ANTHROPIC_AUTH_TOKEN` 与 `CLAUDE_CODE_OAUTH_TOKEN` 不只是“不同写法”，而是会切换客户端的 subscriber / OAuth 叙事
+- `/api/eval/*` 是否出现，已经确认会受 auth mode 直接影响
+- `/api/event_logging/*` 仍然受额外 gating 或时序影响，不能因为某一轮缺失就认定为彻底不存在
 
 ## 维护规则
 

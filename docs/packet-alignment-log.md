@@ -524,6 +524,45 @@
   - 这更可能说明 custom base URL 场景下的 gating / 时序问题，而不是它们永远不存在
   - 下一轮需要继续用这套双通道工作流追这两条路径
 
+### A-021 客户端接入模型会直接改写遥测面
+
+- 日期：2026-04-03
+- 证据：
+  - [auth.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/auth.ts)
+  - [http.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/http.ts)
+  - [user.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/user.ts)
+  - [growthbook.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/growthbook.ts)
+  - [probe-trusted-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-trusted-via-gateway.ps1)
+  - [dual-direct.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/dual-direct.log)
+- 当前差异：
+  - 之前默认把 gateway client token 塞进 `ANTHROPIC_AUTH_TOKEN`
+  - 参考源码已确认，这会被官方客户端视为 external auth token
+  - 结果不是“换一种 header 写法”，而是会直接改变：
+    - `isAnthropicAuthEnabled()`
+    - `isClaudeAISubscriber()`
+    - OAuth account 信息可见性
+    - GrowthBook attributes
+    - 一部分 side channel 是否出现
+  - trusted `via-gateway` 双通道实抓已经确认：
+    - `managed-oauth` 下，direct side-channel 重新出现了 `POST /api/eval/sdk-*`
+    - `external-auth-token` 下，同一工作流里 `/api/eval/*` 没有出现
+- 处理动作：
+  - 新增 `AuthMode` 到 trusted `via-gateway` 脚本
+  - 把双通道 workflow 默认切到 `managed-oauth`
+  - 更新 [.claude.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.json.example) 和 [.claude.alignment.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.alignment.json.example)
+  - 文档层正式把：
+    - `traffic mode`
+    - `auth mode`
+    拆成两个正交维度
+- 回归验证：
+  - `managed-oauth` 的 trusted `via-gateway` probe 已成功返回 `Hello! How can I help you today?`
+  - `finalize-dual-via-gateway.ps1` 已提取出：
+    - direct: `POST /api/eval/sdk-*`
+    - gateway upstream: `POST /v1/messages?beta=true`
+- 剩余风险：
+  - `event_logging` 在 `managed-oauth` 下的 trusted `via-gateway` 时序还没完全跑出来
+  - bootstrap / penguin / MCP 等 side channel 还要继续做 auth-mode-sensitive 矩阵整理
+
 ## 下一步优先级
 
 1. 专项触发 `/api/eval/*`，验证它到底是 headless 退出问题还是场景问题

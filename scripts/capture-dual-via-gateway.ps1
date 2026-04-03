@@ -15,7 +15,10 @@ param(
   [string]$DirectErrPath = "mitm/dual-direct.err.log",
   [string]$GatewayOutPath = "mitm/dual-gateway-server.out.log",
   [string]$GatewayServerErrPath = "mitm/dual-gateway-server.err.log",
-  [string]$ClientToken = "ea8bb4e71d365b9d7b53c747696c0d1f52ffdb961ecd974fd36d6887d0121713"
+  [string]$ClientToken = "ea8bb4e71d365b9d7b53c747696c0d1f52ffdb961ecd974fd36d6887d0121713",
+  [ValidateSet("external-auth-token", "managed-oauth")]
+  [string]$AuthMode = "managed-oauth",
+  [string]$GatewayManagedOAuthToken = "gateway-managed"
 )
 
 $ErrorActionPreference = "Stop"
@@ -89,7 +92,16 @@ Write-Host ""
 Write-Host "Client test environment:"
 Write-Host "  Workspace: $WorkspacePath"
 Write-Host "  ANTHROPIC_BASE_URL=https://localhost:$GatewayPort"
-Write-Host "  ANTHROPIC_AUTH_TOKEN=$ClientToken"
+Write-Host "  auth_mode=$AuthMode"
+switch ($AuthMode) {
+  "external-auth-token" {
+    Write-Host "  ANTHROPIC_AUTH_TOKEN=$ClientToken"
+  }
+  "managed-oauth" {
+    Write-Host "  CLAUDE_CODE_OAUTH_TOKEN=$GatewayManagedOAuthToken"
+    Write-Host "  ANTHROPIC_CUSTOM_HEADERS=x-api-key: $ClientToken"
+  }
+}
 Write-Host "  HTTP_PROXY=http://127.0.0.1:$DirectMitmPort"
 Write-Host "  HTTPS_PROXY=http://127.0.0.1:$DirectMitmPort"
 Write-Host "  ALL_PROXY=http://127.0.0.1:$DirectMitmPort"
@@ -97,7 +109,7 @@ Write-Host "  NO_PROXY=localhost,127.0.0.1"
 Write-Host "  NODE_TLS_REJECT_UNAUTHORIZED=0"
 Write-Host ""
 Write-Host "Recommended probe:"
-Write-Host "  powershell -ExecutionPolicy Bypass -File .\\scripts\\probe-trusted-via-gateway.ps1 -EnableDirectMitm"
+Write-Host "  powershell -ExecutionPolicy Bypass -File .\\scripts\\probe-trusted-via-gateway.ps1 -EnableDirectMitm -AuthMode $AuthMode"
 Write-Host ""
 Write-Host "Next:"
 Write-Host "1. Run the trusted via-gateway client request from the workspace above"

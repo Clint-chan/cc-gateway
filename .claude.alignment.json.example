@@ -1,7 +1,8 @@
 {
   "env": {
     "ANTHROPIC_BASE_URL": "https://your-gateway-host:8443",
-    "ANTHROPIC_AUTH_TOKEN": "your-gateway-client-token"
+    "CLAUDE_CODE_OAUTH_TOKEN": "gateway-managed",
+    "ANTHROPIC_CUSTOM_HEADERS": "x-api-key: your-gateway-client-token"
   },
   "hasCompletedOnboarding": true
 }

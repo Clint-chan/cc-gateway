@@ -34,7 +34,7 @@ The goal is to keep product direction, data model, API shape, and operational st
   Detailed record of the Windows auth/proxy debugging path, MITM evidence, final working client setup, and Docker follow-up notes.
 
 - [client-modes.md](./client-modes.md)
-  Separation between quiet production mode and alignment research mode for Claude Code clients.
+  Separation between traffic mode and auth mode for Claude Code clients.
 
 - [transport-surface-map.md](./transport-surface-map.md)
   Map of which requests belong to the gateway mainline, which bypass to first-party hosts, and which are gated off by mode.
