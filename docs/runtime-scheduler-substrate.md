@@ -25,6 +25,7 @@ Current implementation:
 - one active-lease map for request lifecycle tracking
 - one in-memory budget-state observer fed by upstream rate-limit headers
 - one in-memory usage observer fed by `/api/oauth/usage`
+- one observe-only admission advisory layer with reason codes
 
 This means the runtime already has explicit concepts for:
 
@@ -38,6 +39,7 @@ This means the runtime already has explicit concepts for:
 - drain state
 - rolling-window utilization observation
 - structured 5-hour / weekly usage snapshots
+- admission advice and operator-visible reason codes
 
 ## Why This Exists Before Account Pool
 
@@ -140,6 +142,35 @@ This is the scheduler's account-budget view, not the live limiter view.
 
 It is useful because it exposes the actual usage windows that back the Claude Code `/usage` screen.
 
+### Admission Advisory
+
+The scheduler now derives an observe-only admission advisory from three classes of signal:
+
+- active lease pressure
+- live limiter headers
+- structured `/api/oauth/usage` snapshots
+
+Current advisory states:
+
+- `OPEN`
+- `QUEUE_PREFERRED`
+- `BLOCK_NEW`
+
+Current reason codes include:
+
+- `active_leases_present`
+- `capacity_hint_reached`
+- `live_retry_after`
+- `live_threshold_surpassed`
+- `live_utilization_above_drain_threshold`
+- `usage_five_hour_above_hint`
+- `usage_weekly_above_hint`
+- `usage_window_exhausted`
+
+This is still observe-only.
+
+It does not yet reject or queue requests, but it gives the runtime, future control plane, and future UI a shared explanation model instead of making each layer infer risk independently.
+
 ## Health Surface
 
 `/_health` now includes a scheduler snapshot with:
@@ -148,7 +179,11 @@ It is useful because it exposes the actual usage windows that back the Claude Co
 - `fingerprint_profile_id`
 - `capacity_profile_id`
 - `busy_state`
+- `busy_reason_codes`
 - `drain_state`
+- `drain_reason_codes`
+- `admission_advice`
+- `admission_reason_codes`
 - `quota_state`
 - `active_sessions`
 - `sticky_affinities`
@@ -181,7 +216,7 @@ This substrate does **not** yet do:
 - drain/circuit-breaker enforcement
 - sticky proxy failover sets
 
-Even though the scheduler now **observes** budget state, it still does not enforce budget-aware admission.
+Even though the scheduler now **derives** admission advice, it still does not enforce budget-aware admission.
 
 It also does not actively poll `/api/oauth/usage`; it only ingests that response when the path is proxied through the gateway or an operator probes it directly.
 
@@ -203,8 +238,7 @@ So the runtime currently does the right smaller thing:
 
 The next scheduler work should build on this substrate in order:
 
-1. add account Busy/Idle/Drain reason codes
-2. add session-affinity-aware dispatch interfaces
-3. combine limiter headers and structured usage into admission decisions
-4. add queueing, drain, and cooldown policies
-5. only then add multi-account selection
+1. add session-affinity-aware dispatch interfaces
+2. turn observe-only admission advice into optional enforcement hooks
+3. combine advice with queueing, drain, and cooldown policy
+4. only then add multi-account selection

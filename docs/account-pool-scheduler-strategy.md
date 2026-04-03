@@ -165,6 +165,15 @@ This requires:
 - temporary exclusion from new routing
 - operator-visible reason codes
 
+The current single-account substrate now already exposes observe-only:
+
+- `admission_advice`
+- `busy_reason_codes`
+- `drain_reason_codes`
+- `admission_reason_codes`
+
+That is the correct precursor to real multi-account enforcement, because later queueing and account selection can consume a stable reason vocabulary instead of rebuilding heuristics in each layer.
+
 ## What This Means For Product Architecture
 
 ### Account Pool

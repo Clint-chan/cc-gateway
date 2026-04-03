@@ -72,6 +72,7 @@ test('builds a stable account-centric routing decision', () => {
   assert.equal(lease.decision.fingerprint_profile_id, 'example-darwin-arm64')
   assert.equal(lease.decision.capacity_profile_id, 'starter-max5x')
   assert.equal(lease.decision.proxy_url, 'http://192.168.40.184:10808')
+  assert.equal(scheduler.snapshot().admission_advice, 'OPEN')
 
   lease.complete(200)
 })
@@ -119,6 +120,7 @@ test('tracks busy and idle state across request lifecycle', () => {
   assert.equal(lease.decision.affinity_source, 'request-header')
   assert.equal(scheduler.snapshot().busy_state, 'BUSY')
   assert.equal(scheduler.snapshot().active_sessions, 1)
+  assert.deepEqual(scheduler.snapshot().busy_reason_codes, ['active_leases_present'])
 
   lease.fail(502, new Error('upstream failed'))
   assert.equal(scheduler.snapshot().busy_state, 'IDLE')
@@ -143,10 +145,13 @@ test('observes upstream budget headers and updates quota state', () => {
   const snapshot = scheduler.snapshot()
   assert.equal(snapshot.quota_state, 'LIMITED')
   assert.equal(snapshot.drain_state, 'DRAINING')
+  assert.equal(snapshot.admission_advice, 'QUEUE_PREFERRED')
   assert.equal(snapshot.rolling_window_utilization, 0.92)
   assert.equal(snapshot.rolling_window_resets_at, '2026-04-04T12:00:00Z')
   assert.equal(snapshot.raw_budget_header_count, 2)
   assert.equal(snapshot.drain_threshold, 0.9)
+  assert.deepEqual(snapshot.drain_reason_codes, ['live_utilization_above_drain_threshold'])
+  assert.deepEqual(snapshot.admission_reason_codes, ['live_utilization_above_drain_threshold'])
 })
 
 test('marks account drained when upstream signals quota exhaustion', () => {
@@ -168,8 +173,14 @@ test('marks account drained when upstream signals quota exhaustion', () => {
   const snapshot = scheduler.snapshot()
   assert.equal(snapshot.quota_state, 'EXHAUSTED')
   assert.equal(snapshot.drain_state, 'DRAINED')
+  assert.equal(snapshot.admission_advice, 'BLOCK_NEW')
   assert.equal(snapshot.retry_after_seconds, 60)
   assert.equal(snapshot.threshold_surpassed, true)
+  assert.deepEqual(snapshot.drain_reason_codes, [
+    'live_threshold_surpassed',
+    'live_retry_after',
+    'live_utilization_above_drain_threshold',
+  ])
 })
 
 test('observes structured usage snapshots from /api/oauth/usage', () => {
@@ -205,11 +216,16 @@ test('observes structured usage snapshots from /api/oauth/usage', () => {
 
   const snapshot = scheduler.snapshot()
   assert.equal(snapshot.usage_pressure_state, 'LIMITED')
+  assert.equal(snapshot.admission_advice, 'QUEUE_PREFERRED')
   assert.equal(snapshot.usage_snapshot?.five_hour?.utilization, 0.91)
   assert.equal(snapshot.usage_snapshot?.seven_day?.utilization, 0.4)
   assert.equal(snapshot.usage_snapshot?.seven_day_sonnet?.utilization, 0.82)
   assert.equal(snapshot.usage_snapshot?.extra_usage?.is_enabled, true)
   assert.equal(snapshot.usage_snapshot?.extra_usage?.utilization, 0.25)
+  assert.deepEqual(snapshot.admission_reason_codes, [
+    'usage_five_hour_above_hint',
+    'usage_weekly_above_hint',
+  ])
 })
 
 test('marks usage pressure exhausted when usage payload reaches 100 percent', () => {
@@ -230,6 +246,38 @@ test('marks usage pressure exhausted when usage payload reaches 100 percent', ()
   })))
 
   assert.equal(scheduler.snapshot().usage_pressure_state, 'EXHAUSTED')
+  assert.equal(scheduler.snapshot().admission_advice, 'BLOCK_NEW')
+  assert.deepEqual(scheduler.snapshot().admission_reason_codes, [
+    'usage_window_exhausted',
+    'usage_weekly_above_hint',
+  ])
+})
+
+test('prefers queueing when active sessions reach the account capacity hint', () => {
+  const scheduler = createScheduler(config)
+  const leaseA = scheduler.beginRequest({
+    client_name: 'tester',
+    method: 'POST',
+    path: '/v1/messages',
+    headers: {},
+    body: Buffer.from(JSON.stringify({ messages: [{ role: 'user', content: 'hello-a' }] })),
+  })
+  const leaseB = scheduler.beginRequest({
+    client_name: 'tester',
+    method: 'POST',
+    path: '/v1/messages',
+    headers: {},
+    body: Buffer.from(JSON.stringify({ messages: [{ role: 'user', content: 'hello-b' }] })),
+  })
+
+  const snapshot = scheduler.snapshot()
+  assert.equal(snapshot.active_sessions, 2)
+  assert.equal(snapshot.admission_advice, 'QUEUE_PREFERRED')
+  assert.deepEqual(snapshot.busy_reason_codes, ['active_leases_present', 'capacity_hint_reached'])
+  assert.deepEqual(snapshot.admission_reason_codes, ['active_leases_present', 'capacity_hint_reached'])
+
+  leaseA.complete(200)
+  leaseB.complete(200)
 })
 
 console.log(`\n${passed} passed, ${failed} failed\n`)

@@ -131,6 +131,7 @@
 - 单账号 runtime 已经开始走账号中心化 scheduler substrate
 - scheduler substrate 已经开始吸收 upstream rate-limit 头并暴露本地 budget state
 - scheduler substrate 已经开始吸收 `/api/oauth/usage` 并暴露结构化 usage snapshot
+- scheduler substrate 已经开始暴露 observe-only 的 `admission_advice` 和 reason codes
 
 未完成：
 

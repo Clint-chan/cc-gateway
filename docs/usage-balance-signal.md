@@ -129,6 +129,14 @@ Current advisory state rules are:
 
 This is intentionally separate from live limiter-state exhaustion, which still comes from response headers.
 
+The runtime now also folds this signal into observe-only:
+
+- `admission_advice`
+- `admission_reason_codes`
+
+That means `/api/oauth/usage` is no longer just an operator report surface.
+It is now a scheduler input.
+
 ## Next Step
 
 The next scheduler step should combine both sources:

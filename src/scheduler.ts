@@ -8,6 +8,16 @@ export type DrainState = 'ACCEPTING' | 'DRAINING' | 'DRAINED'
 export type AdmissionMode = 'observe-only'
 export type QuotaState = 'UNKNOWN' | 'NORMAL' | 'LIMITED' | 'EXHAUSTED'
 export type UsagePressureState = 'UNKNOWN' | 'NORMAL' | 'LIMITED' | 'EXHAUSTED'
+export type AdmissionAdvice = 'OPEN' | 'QUEUE_PREFERRED' | 'BLOCK_NEW'
+export type SchedulerReasonCode =
+  | 'active_leases_present'
+  | 'capacity_hint_reached'
+  | 'live_retry_after'
+  | 'live_threshold_surpassed'
+  | 'live_utilization_above_drain_threshold'
+  | 'usage_five_hour_above_hint'
+  | 'usage_weekly_above_hint'
+  | 'usage_window_exhausted'
 
 export type UsageLimitSnapshot = {
   utilization: number
@@ -79,7 +89,11 @@ export type SchedulerSnapshot = {
   fingerprint_profile_id: string
   capacity_profile_id: string
   busy_state: BusyState
+  busy_reason_codes: SchedulerReasonCode[]
   drain_state: DrainState
+  drain_reason_codes: SchedulerReasonCode[]
+  admission_advice: AdmissionAdvice
+  admission_reason_codes: SchedulerReasonCode[]
   active_sessions: number
   sticky_affinities: number
   admission_mode: AdmissionMode
@@ -174,12 +188,28 @@ export class SingleAccountScheduler {
   }
 
   snapshot(): SchedulerSnapshot {
+    const busyReasonCodes = deriveBusyReasonCodes(this.leases.size, this.account.capacity_profile)
+    const liveBudgetReasonCodes = deriveLiveBudgetReasonCodes(this.account)
+    const usageReasonCodes = deriveUsageReasonCodes(this.account)
+    const drainReasonCodes = deriveDrainReasonCodes(this.account, liveBudgetReasonCodes)
+    const admissionAdvice = deriveAdmissionAdvice(this.account, this.leases.size)
+    const admissionReasonCodes = deriveAdmissionReasonCodes(
+      admissionAdvice,
+      busyReasonCodes,
+      liveBudgetReasonCodes,
+      usageReasonCodes,
+    )
+
     return {
       account_id: this.account.id,
       fingerprint_profile_id: this.account.fingerprint_profile_id,
       capacity_profile_id: this.account.capacity_profile.id,
       busy_state: this.account.busy_state,
+      busy_reason_codes: busyReasonCodes,
       drain_state: this.account.drain_state,
+      drain_reason_codes: drainReasonCodes,
+      admission_advice: admissionAdvice,
+      admission_reason_codes: admissionReasonCodes,
       active_sessions: this.leases.size,
       sticky_affinities: this.stickyAffinities.size,
       admission_mode: this.account.capacity_profile.admission_mode,
@@ -541,6 +571,119 @@ function deriveUsagePressureState(
     return 'LIMITED'
   }
   return 'NORMAL'
+}
+
+function deriveBusyReasonCodes(
+  activeSessions: number,
+  capacityProfile: CapacityProfile,
+): SchedulerReasonCode[] {
+  const reasonCodes: SchedulerReasonCode[] = []
+
+  if (activeSessions > 0) {
+    reasonCodes.push('active_leases_present')
+  }
+  if (activeSessions >= capacityProfile.max_active_sessions_hint) {
+    reasonCodes.push('capacity_hint_reached')
+  }
+
+  return reasonCodes
+}
+
+function deriveLiveBudgetReasonCodes(account: RuntimeAccount): SchedulerReasonCode[] {
+  const reasonCodes: SchedulerReasonCode[] = []
+
+  if (account.budget_state.threshold_surpassed) {
+    reasonCodes.push('live_threshold_surpassed')
+  }
+  if (account.budget_state.retry_after_seconds != null) {
+    reasonCodes.push('live_retry_after')
+  }
+  if (
+    account.budget_state.rolling_window_utilization != null &&
+    account.budget_state.rolling_window_utilization >= account.capacity_profile.drain_threshold
+  ) {
+    reasonCodes.push('live_utilization_above_drain_threshold')
+  }
+
+  return reasonCodes
+}
+
+function deriveUsageReasonCodes(account: RuntimeAccount): SchedulerReasonCode[] {
+  const usage = account.budget_state.usage
+  if (!usage) return []
+
+  const reasonCodes: SchedulerReasonCode[] = []
+  if (usage.pressure_state === 'EXHAUSTED') {
+    reasonCodes.push('usage_window_exhausted')
+  }
+  if (
+    usage.five_hour?.utilization != null &&
+    account.capacity_profile.rolling_window_budget_hint != null &&
+    usage.five_hour.utilization >= account.capacity_profile.rolling_window_budget_hint
+  ) {
+    reasonCodes.push('usage_five_hour_above_hint')
+  }
+
+  const weeklyHint = account.capacity_profile.weekly_budget_hint
+  const weeklyCandidates = [
+    usage.seven_day?.utilization,
+    usage.seven_day_sonnet?.utilization,
+    usage.seven_day_opus?.utilization,
+  ].filter((value): value is number => value != null)
+  if (
+    weeklyHint != null &&
+    weeklyCandidates.length > 0 &&
+    Math.max(...weeklyCandidates) >= weeklyHint
+  ) {
+    reasonCodes.push('usage_weekly_above_hint')
+  }
+
+  return reasonCodes
+}
+
+function deriveDrainReasonCodes(
+  account: RuntimeAccount,
+  liveBudgetReasonCodes: SchedulerReasonCode[],
+): SchedulerReasonCode[] {
+  if (account.drain_state === 'ACCEPTING') {
+    return []
+  }
+  return liveBudgetReasonCodes
+}
+
+function deriveAdmissionAdvice(
+  account: RuntimeAccount,
+  activeSessions: number,
+): AdmissionAdvice {
+  if (account.quota_state === 'EXHAUSTED' || account.budget_state.usage?.pressure_state === 'EXHAUSTED') {
+    return 'BLOCK_NEW'
+  }
+  if (account.budget_state.retry_after_seconds != null) {
+    return 'BLOCK_NEW'
+  }
+  if (
+    account.quota_state === 'LIMITED' ||
+    account.drain_state === 'DRAINING' ||
+    account.budget_state.usage?.pressure_state === 'LIMITED' ||
+    activeSessions >= account.capacity_profile.max_active_sessions_hint
+  ) {
+    return 'QUEUE_PREFERRED'
+  }
+  return 'OPEN'
+}
+
+function deriveAdmissionReasonCodes(
+  advice: AdmissionAdvice,
+  busyReasonCodes: SchedulerReasonCode[],
+  liveBudgetReasonCodes: SchedulerReasonCode[],
+  usageReasonCodes: SchedulerReasonCode[],
+): SchedulerReasonCode[] {
+  if (advice === 'OPEN') {
+    return []
+  }
+
+  const ordered = [...busyReasonCodes, ...liveBudgetReasonCodes, ...usageReasonCodes]
+  return Array.from(new Set(ordered))
 }
 
 function normalizeUtilizationPercent(value?: number | null): number | undefined {
