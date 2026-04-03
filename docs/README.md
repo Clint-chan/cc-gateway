@@ -51,6 +51,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [trusted-capture-workflow.md](./trusted-capture-workflow.md)
   Dedicated workflow for creating a separate trusted capture workspace and probing GrowthBook-dependent paths without mixing home or repo trust state.
 
+- [rapid-triage-playbook.md](./rapid-triage-playbook.md)
+  Fast triage playbook for classifying new CLI or telemetry changes into traffic mode, auth mode, transport ownership, or rewrite gaps.
+
 - [telemetry-automation-plan.md](./telemetry-automation-plan.md)
   Semi-automation roadmap for recurring capture, parsing, diffing, and manual review.
 
