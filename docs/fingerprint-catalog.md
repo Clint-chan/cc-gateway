@@ -31,6 +31,13 @@
   - [claude-cli.flows](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/claude-cli.flows)
   - [gateway.flows](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/gateway.flows)
 
+### 抓包脚本目录
+
+- [capture-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/capture-gateway.ps1)
+- [finalize-gateway-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-gateway-capture.ps1)
+- [extract_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/extract_signals.py)
+- [diff_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/diff_signals.py)
+
 ### 参考源码目录
 
 - 目录：
@@ -242,6 +249,21 @@
 - 当前状态：
   需要单独测试带 MCP 的场景
 
+#### 5.4 custom base URL gating
+
+- 作用：
+  决定哪些控制面和同步类功能仍然会发请求
+- 参考位置：
+  - [providers.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/model/providers.ts)
+  - [policyLimits/index.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/policyLimits/index.ts)
+  - [remoteManagedSettings/syncCache.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/remoteManagedSettings/syncCache.ts)
+  - [settingsSync/index.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/settingsSync/index.ts)
+  - [commands.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/commands.ts)
+- 当前结论：
+  custom `ANTHROPIC_BASE_URL` 不只是换目标地址，还会让一批 only-first-party 控制面逻辑直接不再生效
+- 风险说明：
+  后续看到“某些路由没发出来”时，不能默认当作抓包失败或 gateway 改坏了
+
 ## 快速跟进最新指纹的方法
 
 ### 方法一：直接抓官方客户端
@@ -263,6 +285,7 @@
    - `claude-cli.log`
    - `gateway.log`
 5. 读 `gateway.log` 时只看最后一次请求，不要把历史抓包行误判成当前结果
+6. 如果要解析 `.flows`，先停止 `mitmdump`，再运行提取或 diff 脚本
 
 ### 方法三：对照参考源码
 

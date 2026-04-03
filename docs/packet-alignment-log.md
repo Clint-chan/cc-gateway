@@ -210,6 +210,72 @@
 - 剩余风险：
   - 虽然占位符已经去掉，但我们仍然无法伪造官方 native attestation，这个限制不会消失。
 
+### A-010 Windows 抓包 flush 约束
+
+- 日期：2026-04-03
+- 证据：
+  - [gateway.flows](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/gateway.flows)
+  - [extract_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/extract_signals.py)
+  - [finalize-gateway-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-gateway-capture.ps1)
+- 当前差异：
+  - Windows 下直接在 `mitmdump` 仍运行时读取 `.flows`，经常会得到空结果或旧结果。
+- 处理动作：
+  - 把“先停 mitmdump，再解析 `.flows`”固化成标准流程。
+  - 新增 `scripts/finalize-gateway-capture.ps1` 负责 stop-and-read。
+- 回归验证：
+  - 停止 `mitmdump` 后，`gateway.flows` 成功读出最新单次请求信号。
+- 剩余风险：
+  - 后续如果改成常驻抓包模式，需要换成更适合增量读取的保存方式。
+
+### A-011 /v1/messages 主链对齐结果
+
+- 日期：2026-04-03
+- 证据：
+  - [gateway.flows](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/gateway.flows)
+  - [claude-cli.flows](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/claude-cli.flows)
+  - [diff_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/diff_signals.py)
+- 当前差异：
+  - 使用 `/v1/messages` 过滤后的 direct vs gateway diff，只剩两项：
+    - `metadata.user_id` 中的 `device_id`
+    - billing header 中 direct 有 `cch=00000`，gateway 已剥离
+- 处理动作：
+  - 版本号、beta 集合、`cc_entrypoint`、billing fingerprint 都已经对齐到最新 direct CLI 形态。
+- 回归验证：
+  - 最新单次 gateway 抓包结果为：
+    - `user_agent = claude-cli/2.1.91 (external, sdk-cli)`
+    - `billing_header = cc_version=2.1.91.9f2; cc_entrypoint=sdk-cli;`
+    - `metadata.user_id.device_id = canonical device`
+- 剩余风险：
+  - `device_id` 的差异是我们有意保留的统一身份策略，不是 bug。
+  - `cch` 无法被 Node 网关伪造，只能选择保留占位符或剥离；当前策略是剥离。
+
+### A-012 custom base URL 行为面收缩
+
+- 日期：2026-04-03
+- 证据：
+  - [providers.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/model/providers.ts)
+  - [policyLimits/index.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/policyLimits/index.ts)
+  - [remoteManagedSettings/syncCache.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/remoteManagedSettings/syncCache.ts)
+  - [settingsSync/index.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/settingsSync/index.ts)
+  - [commands.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/commands.ts)
+- 当前差异：
+  - gateway 场景下，实测最稳定出现的是 `/v1/messages`。
+  - 一部分 first-party 控制面能力在源码里明确要求 `isFirstPartyAnthropicBaseUrl()` 为真。
+- 处理动作：
+  - 记录为架构层结论，而不是误判成“抓包漏了”。
+  - 后续对 `/api/eval/*` 和 `/api/event_logging/*` 的验证，要区分：
+    - 客户端本身是否还会发
+    - gateway 是否把它们改写正确
+- 回归验证：
+  - 参考源码已确认 custom base URL 会让这些模块直接失去资格：
+    - policy limits
+    - remote managed settings
+    - settings sync
+    - 某些 console user 分支
+- 剩余风险：
+  - 这并不等于所有遥测都关闭。
+  - `GrowthBook` 和 `1P event logging` 在 custom base URL 场景下的完整行为还需要专项复抓验证。
+
 ## 下一步优先级
 
 1. 重新抓取 direct CLI 与 gateway 上游流量，验证 A-003 到 A-006 的实际效果

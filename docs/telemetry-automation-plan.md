@@ -37,6 +37,8 @@
 - 同一代理出口
 - 同一 Claude Code 版本
 - 同一最小测试提示词
+- 采集结束后必须先停止 `mitmdump`，再读取 `.flows`
+  否则 Windows 下经常出现流量尚未 flush 到文件的问题
 
 ### 第二步：抽取
 
@@ -73,6 +75,13 @@
 - `scripts/parse-mitm.ts`
 - `scripts/diff-telemetry.ts`
 - `scripts/report-telemetry.ts`
+
+当前仓库里已经先落了最小本地版本：
+
+- [capture-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/capture-gateway.ps1)
+- [finalize-gateway-capture.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-gateway-capture.ps1)
+- [extract_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/extract_signals.py)
+- [diff_signals.py](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/diff_signals.py)
 
 ## 自动任务触发条件
 
@@ -112,6 +121,7 @@
 1. custom base URL 场景下，CLI 不一定会稳定发送全部 first-party 遥测通道
 2. 有些路径需要特定交互场景才会触发
 3. `cch` 这类 native attestation 无法靠 Node 网关自动补齐
+4. custom base URL 会让一部分 only-first-party 控制面路径直接失去资格，自动 diff 时必须区分“未发送”和“发送后不一致”
 
 ## 结论
 
