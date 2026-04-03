@@ -95,6 +95,10 @@
   在 trusted capture workspace 下，`claude -p "hello"` 已经明确抓到 `POST /api/eval/sdk-*`
 - 当前判断：
   `/api/eval/*` 仍然是活的 direct-host side channel；默认 cwd 抓不到，不代表它不存在
+- 当前 via-gateway 补充结论：
+  在 trusted workspace + custom base URL 的双通道最小请求里，这一路本轮没有出现
+- 备注：
+  这更像 custom base URL 研究路径下的 gating / 时序问题，不能直接推导成“gateway 已经接管了 eval”
 
 #### 2.2 1P event logging
 
@@ -108,6 +112,10 @@
   只有 `quiet mode` 关闭它，或者额外网络层代理接管它
 - 最新实抓：
   在 `alignment mode + custom base URL + headless` 的当前最小请求里，这一路仍然会发，而且会绕过 gateway，直接暴露真实本机环境
+- 当前 via-gateway 补充结论：
+  在 trusted workspace + custom base URL 的本轮双通道最小请求里，没有再次出现
+- 备注：
+  说明它至少还受 mode、probe 时序或其他 gating 影响；不能因为单轮缺失就把它从风险面移除
 
 #### 2.3 metrics opt-out
 
@@ -141,6 +149,7 @@
   [bootstrap.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/bootstrap.ts)
 - 最新实抓：
   trusted capture workspace 下的 `claude -p "hello"` 已抓到 `GET /api/claude_cli/bootstrap`
+  在 trusted `via-gateway` 双通道中，这一路仍以 direct side channel 形态出现
 
 #### 3.2 grove 与账户设置
 
@@ -150,6 +159,7 @@
   trusted capture workspace 下的 `claude -p "hello"` 已抓到：
   - `GET /api/claude_code_grove`
   - `GET /api/oauth/account/settings`
+  当前 via-gateway 双通道最小请求里，这两条本轮未出现
 
 #### 3.3 usage / referral / overage credit grant / admin requests
 
@@ -173,6 +183,11 @@
   - [fastMode.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/utils/fastMode.ts)
   - [ultrareviewQuota.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/ultrareviewQuota.ts)
   - [sessionIngress.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/sessionIngress.ts)
+- 最新实抓：
+  trusted `via-gateway` 双通道里已抓到：
+  - `GET /api/claude_code_penguin_mode`
+- 备注：
+  本轮它仍以 direct side-channel 形态出现，不经过 gateway 上游
 
 #### 3.6 MCP 控制面
 
@@ -184,6 +199,7 @@
   - `GET /mcp-registry/v0/servers?version=latest&visibility=commercial`
 - 备注：
   这说明即使是最小 headless 请求，MCP 相关控制面也可能被带起来
+  在 trusted `via-gateway` 双通道里，这两条仍然以 direct side-channel 形态出现，不经过 gateway 上游
 
 ## 两层 gating
 

@@ -491,6 +491,39 @@
   - `remote-control` 具体在哪一步提前返回，还要继续对照 bundle 源码和 debug 日志拆
   - 这条链还不能直接拿来推断 gateway 对 `/api/eval/*` 的覆盖率
 
+### A-020 trusted `via-gateway` 双通道已拆出主链和直连控制面
+
+- 日期：2026-04-03
+- 证据：
+  - [capture-dual-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/capture-dual-via-gateway.ps1)
+  - [probe-trusted-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-trusted-via-gateway.ps1)
+  - [finalize-dual-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/finalize-dual-via-gateway.ps1)
+  - [dual-direct.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/dual-direct.log)
+  - [dual-gateway.log](/C:/Users/94503/Documents/GitHub/cc-gateway/mitm/dual-gateway.log)
+- 当前差异：
+  - 当客户端既要走 gateway，又要把直连 side channel 送进 direct MITM 时，单纯设置 `HTTP_PROXY / HTTPS_PROXY / ALL_PROXY` 还不够。
+  - 如果不补 `NO_PROXY=localhost,127.0.0.1`，客户端会把 `https://localhost:9443` 这条主链也一起送去 direct MITM，导致请求卡住。
+  - 补上 `NO_PROXY` 之后，双通道最小请求已经稳定拆开：
+    - gateway 上游只看到 `POST /v1/messages?beta=true`
+    - direct side-channel 看到：
+      - `GET /v1/mcp_servers`
+      - `GET /api/claude_cli/bootstrap`
+      - `GET /api/claude_code_penguin_mode`
+      - `GET /mcp-registry/v0/servers`
+- 处理动作：
+  - 新增 trusted via-gateway probe 脚本：
+    [probe-trusted-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-trusted-via-gateway.ps1)
+  - 新增双通道 capture / finalize 脚本
+  - 在 workflow 文档里固化 `NO_PROXY` 要求
+- 回归验证：
+  - 补 `NO_PROXY` 后，`claude -p "hello"` 已重新成功返回
+  - gateway 上游 `.flows` 已稳定提取出 `/v1/messages`
+  - direct side-channel `.log` 已稳定提取出多个 first-party 控制面请求
+- 剩余风险：
+  - 本轮双通道中没有看到 `/api/eval/*` 和 `/api/event_logging/*`
+  - 这更可能说明 custom base URL 场景下的 gating / 时序问题，而不是它们永远不存在
+  - 下一轮需要继续用这套双通道工作流追这两条路径
+
 ## 下一步优先级
 
 1. 专项触发 `/api/eval/*`，验证它到底是 headless 退出问题还是场景问题

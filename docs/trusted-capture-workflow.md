@@ -173,6 +173,49 @@ Select-String -Path mitm\direct.log -Pattern '/api/eval/|v1/mcp_servers|claude_c
 - trusted workspace + `headless-hello` 已经足够作为 `/api/eval/*` 的标准 direct probe
 - `remote-control` 当前更适合被当作“bridge/entitlement 专项探针”，而不是 `/api/eval/*` 的唯一入口
 
+## via-gateway 双通道对照
+
+当目标不是“只看 direct”，而是要同时确认：
+
+- 客户端直连 side channel 发了什么
+- gateway 上游真正转发了什么
+
+应该使用双通道抓包：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\capture-dual-via-gateway.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\probe-trusted-via-gateway.ps1 -EnableDirectMitm
+powershell -ExecutionPolicy Bypass -File .\scripts\finalize-dual-via-gateway.ps1 -StopGateway
+```
+
+这里有一个关键点：
+
+- `HTTP_PROXY / HTTPS_PROXY / ALL_PROXY` 可以指向 direct MITM
+- 但必须同时设置：
+  `NO_PROXY=localhost,127.0.0.1`
+
+否则客户端可能把 `https://localhost:9443` 这个 gateway 目标也一起送进 direct MITM，导致主请求链卡住，最后变成“side channel 看到了，gateway 主链没走通”的假假象。
+
+### 当前已确认的双通道结果
+
+在 trusted workspace + custom base URL + `NO_PROXY=localhost,127.0.0.1` 的当前最小请求里：
+
+- gateway 上游只稳定看到：
+  - `POST /v1/messages?beta=true`
+- direct side-channel MITM 看到：
+  - `GET /v1/mcp_servers`
+  - `GET /api/claude_cli/bootstrap`
+  - `GET /api/claude_code_penguin_mode`
+  - `GET /mcp-registry/v0/servers`
+- 本轮双通道里没有看到：
+  - `/api/eval/*`
+  - `/api/event_logging/*`
+
+这说明：
+
+- 最小 via-gateway 请求里，主链和一部分 side channel 已经可以被明确拆开
+- 但 `/api/eval/*` 与 `event_logging` 在 custom base URL 研究路径下仍然受额外 gating 或时序影响，不能因为这一轮缺失就认定为彻底不存在
+
 ## 维护规则
 
 后面如果这条工作流有变化，必须同步更新：

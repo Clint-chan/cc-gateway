@@ -51,6 +51,13 @@
 - 不要设置 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`
 - 否则 `GrowthBook` 和 `1P event logging` 根本不会发
 
+如果目标是做 trusted `via-gateway` 双通道：
+
+- 客户端可以继续把 `HTTP_PROXY / HTTPS_PROXY / ALL_PROXY` 指向 direct MITM
+- 但必须同时设置：
+  `NO_PROXY=localhost,127.0.0.1`
+- 否则 `https://localhost:9443` 这条 gateway 主链也可能被错误送进 direct MITM，导致主请求挂起
+
 ### 第二步：抽取
 
 从抓包中抽取固定字段：
