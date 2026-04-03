@@ -71,6 +71,7 @@ Keep these in `config.yaml`:
 
 - fingerprint profile reference
 - capacity profile hints
+- admission control mode
 - rewrite policy defaults
 
 `fingerprint_profile` can now be either:
@@ -113,6 +114,7 @@ Review these values as well and adjust if needed:
 Then review [config.yaml](/C:/Users/94503/Documents/GitHub/cc-gateway/config.yaml) only if you want to change the canonical fingerprint persona.
 Most fingerprint changes should now happen in the referenced profile file instead.
 Account-side scheduler hints such as `capacity_profile.max_active_sessions_hint` or `capacity_profile.drain_threshold` still belong in `config.yaml`, not in the fingerprint asset.
+Optional enforcement policy such as `admission_control.enforcement_mode` also belongs in `config.yaml`.
 
 ## Local Docker Deployment
 
@@ -214,6 +216,22 @@ Expected behavior:
 - returns the current `five_hour` and weekly usage windows
 - writes a JSON payload to a temp path or explicit `-OutputPath`
 - updates the scheduler's in-memory `usage_snapshot`
+
+### Optional admission enforcement
+
+The runtime now supports a narrow enforcement hook above the observe-only scheduler advice:
+
+```yaml
+admission_control:
+  enforcement_mode: observe-only
+  reject_status_code: 429
+```
+
+Operational rule:
+
+- keep `observe-only` as the default
+- only enable `reject-block-new` or `reject-queue-preferred` in controlled experiments
+- do not treat this as a replacement for a real queue or multi-account scheduler
 
 ## Local Proxy Requirements
 

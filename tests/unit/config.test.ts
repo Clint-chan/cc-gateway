@@ -37,6 +37,9 @@ capacity_profile:
   weekly_budget_hint: 0.8
   peak_hour_multiplier: 1.2
   drain_threshold: 0.9
+admission_control:
+  enforcement_mode: \${TEST_ENFORCEMENT_MODE:-observe-only}
+  reject_status_code: \${TEST_REJECT_STATUS_CODE:-429}
 auth:
   tokens:
     - name: "\${TEST_CLIENT_NAME}"
@@ -105,6 +108,8 @@ function withTempConfig(envBody: string, run: (configPath: string) => void): voi
     'TEST_PROXY_URL',
     'TEST_CLIENT_NAME',
     'TEST_CLIENT_TOKEN',
+    'TEST_ENFORCEMENT_MODE',
+    'TEST_REJECT_STATUS_CODE',
     'TEST_ACCESS_TOKEN',
     'TEST_REFRESH_TOKEN',
     'TEST_EXPIRES_AT',
@@ -151,6 +156,8 @@ TEST_EMAIL=tester@example.com
     assert.equal(config.capacity_profile?.id, 'starter-max5x')
     assert.equal(config.capacity_profile?.max_active_sessions_hint, 2)
     assert.equal(config.capacity_profile?.drain_threshold, 0.9)
+    assert.equal(config.admission_control?.enforcement_mode, 'observe-only')
+    assert.equal(config.admission_control?.reject_status_code, 429)
   })
 })
 
@@ -210,6 +217,8 @@ TEST_EMAIL=tester@example.com
     'TEST_GATEWAY_PORT',
     'TEST_CLIENT_NAME',
     'TEST_CLIENT_TOKEN',
+    'TEST_ENFORCEMENT_MODE',
+    'TEST_REJECT_STATUS_CODE',
     'TEST_REFRESH_TOKEN',
     'TEST_DEVICE_ID',
     'TEST_EMAIL',
@@ -222,6 +231,54 @@ TEST_EMAIL=tester@example.com
     assert.throws(
       () => loadConfig(configPath),
       /config: capacity_profile.max_active_sessions_hint must be greater than zero/,
+    )
+  } finally {
+    for (const [key, value] of snapshot) {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('throws a clear error when admission_control.reject_status_code is invalid', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'cc-gateway-invalid-admission-'))
+  const configPath = join(dir, 'config.yaml')
+  const envPath = join(dir, '.env')
+
+  writeFileSync(configPath, baseConfig)
+  writeFileSync(
+    envPath,
+    `
+TEST_GATEWAY_PORT=8443
+TEST_CLIENT_NAME=invalid-admission
+TEST_CLIENT_TOKEN=test-client-token
+TEST_REFRESH_TOKEN=test-refresh-token
+TEST_DEVICE_ID=ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+TEST_EMAIL=tester@example.com
+TEST_REJECT_STATUS_CODE=399
+`,
+  )
+
+  const snapshot = new Map<string, string | undefined>()
+  for (const key of [
+    'TEST_GATEWAY_PORT',
+    'TEST_CLIENT_NAME',
+    'TEST_CLIENT_TOKEN',
+    'TEST_ENFORCEMENT_MODE',
+    'TEST_REJECT_STATUS_CODE',
+    'TEST_REFRESH_TOKEN',
+    'TEST_DEVICE_ID',
+    'TEST_EMAIL',
+  ]) {
+    snapshot.set(key, process.env[key])
+    delete process.env[key]
+  }
+
+  try {
+    assert.throws(
+      () => loadConfig(configPath),
+      /config: admission_control.reject_status_code must be within \[400, 599\]/,
     )
   } finally {
     for (const [key, value] of snapshot) {

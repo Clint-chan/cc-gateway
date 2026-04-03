@@ -115,6 +115,17 @@ export type SchedulerSnapshot = {
   proxy_bound: boolean
 }
 
+export type AdmissionPreview = {
+  advice: AdmissionAdvice
+  reason_codes: SchedulerReasonCode[]
+  projected_active_sessions: number
+  busy_state: BusyState
+  drain_state: DrainState
+  quota_state: QuotaState
+  usage_pressure_state?: UsagePressureState
+  retry_after_seconds?: number
+}
+
 type SchedulingContext = {
   client_name: string
   method: string
@@ -237,6 +248,38 @@ export class SingleAccountScheduler {
           }
         : undefined,
       proxy_bound: Boolean(this.account.proxy_url),
+    }
+  }
+
+  previewIncomingAdmission(): AdmissionPreview {
+    const projectedActiveSessions = this.leases.size + 1
+    const busyReasonCodes = deriveIncomingBusyReasonCodes(
+      this.leases.size,
+      projectedActiveSessions,
+      this.account.capacity_profile,
+    )
+    const liveBudgetReasonCodes = deriveLiveBudgetReasonCodes(this.account)
+    const usageReasonCodes = deriveUsageReasonCodes(this.account)
+    const advice = deriveProjectedAdmissionAdvice(
+      this.account,
+      projectedActiveSessions,
+      busyReasonCodes,
+    )
+
+    return {
+      advice,
+      reason_codes: deriveAdmissionReasonCodes(
+        advice,
+        busyReasonCodes,
+        liveBudgetReasonCodes,
+        usageReasonCodes,
+      ),
+      projected_active_sessions: projectedActiveSessions,
+      busy_state: projectedActiveSessions > 0 ? 'BUSY' : 'IDLE',
+      drain_state: this.account.drain_state,
+      quota_state: this.account.quota_state,
+      usage_pressure_state: this.account.budget_state.usage?.pressure_state,
+      retry_after_seconds: this.account.budget_state.retry_after_seconds,
     }
   }
 
@@ -589,6 +632,23 @@ function deriveBusyReasonCodes(
   return reasonCodes
 }
 
+function deriveIncomingBusyReasonCodes(
+  currentActiveSessions: number,
+  projectedActiveSessions: number,
+  capacityProfile: CapacityProfile,
+): SchedulerReasonCode[] {
+  const reasonCodes: SchedulerReasonCode[] = []
+
+  if (currentActiveSessions > 0) {
+    reasonCodes.push('active_leases_present')
+  }
+  if (projectedActiveSessions > capacityProfile.max_active_sessions_hint) {
+    reasonCodes.push('capacity_hint_reached')
+  }
+
+  return reasonCodes
+}
+
 function deriveLiveBudgetReasonCodes(account: RuntimeAccount): SchedulerReasonCode[] {
   const reasonCodes: SchedulerReasonCode[] = []
 
@@ -666,6 +726,30 @@ function deriveAdmissionAdvice(
     account.drain_state === 'DRAINING' ||
     account.budget_state.usage?.pressure_state === 'LIMITED' ||
     activeSessions >= account.capacity_profile.max_active_sessions_hint
+  ) {
+    return 'QUEUE_PREFERRED'
+  }
+  return 'OPEN'
+}
+
+function deriveProjectedAdmissionAdvice(
+  account: RuntimeAccount,
+  projectedActiveSessions: number,
+  busyReasonCodes: SchedulerReasonCode[],
+): AdmissionAdvice {
+  if (account.quota_state === 'EXHAUSTED' || account.budget_state.usage?.pressure_state === 'EXHAUSTED') {
+    return 'BLOCK_NEW'
+  }
+  if (account.budget_state.retry_after_seconds != null) {
+    return 'BLOCK_NEW'
+  }
+  if (
+    account.quota_state === 'LIMITED' ||
+    account.drain_state === 'DRAINING' ||
+    account.drain_state === 'DRAINED' ||
+    account.budget_state.usage?.pressure_state === 'LIMITED' ||
+    busyReasonCodes.includes('capacity_hint_reached') ||
+    projectedActiveSessions > account.capacity_profile.max_active_sessions_hint
   ) {
     return 'QUEUE_PREFERRED'
   }

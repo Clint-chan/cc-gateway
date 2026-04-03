@@ -172,6 +172,12 @@ The current single-account substrate now already exposes observe-only:
 - `drain_reason_codes`
 - `admission_reason_codes`
 
+It also now has a narrow optional enforcement hook:
+
+- `observe-only`
+- `reject-block-new`
+- `reject-queue-preferred`
+
 That is the correct precursor to real multi-account enforcement, because later queueing and account selection can consume a stable reason vocabulary instead of rebuilding heuristics in each layer.
 
 ## What This Means For Product Architecture

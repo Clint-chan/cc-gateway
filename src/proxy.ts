@@ -9,7 +9,7 @@ import { getAccessToken } from './oauth.js'
 import { rewriteBodyWithHeaders, rewriteHeaders } from './rewriter.js'
 import { audit, log } from './logger.js'
 import { getProxyAgent } from './net.js'
-import { createScheduler } from './scheduler.js'
+import { createScheduler, type AdmissionPreview } from './scheduler.js'
 
 export function startProxy(config: Config) {
   initAuth(config)
@@ -111,6 +111,37 @@ async function handleRequest(
     chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
   }
   let body = Buffer.concat(chunks)
+  const admissionPreview = scheduler.previewIncomingAdmission()
+  if (shouldRejectAdmission(config, admissionPreview)) {
+    const status = config.admission_control?.reject_status_code || 429
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (admissionPreview.retry_after_seconds != null) {
+      headers['Retry-After'] = String(admissionPreview.retry_after_seconds)
+    }
+    res.writeHead(status, headers)
+    res.end(JSON.stringify({
+      error: 'Admission rejected by scheduler policy',
+      admission_advice: admissionPreview.advice,
+      reason_codes: admissionPreview.reason_codes,
+      projected_active_sessions: admissionPreview.projected_active_sessions,
+      quota_state: admissionPreview.quota_state,
+      drain_state: admissionPreview.drain_state,
+      usage_pressure_state: admissionPreview.usage_pressure_state,
+    }))
+    log('warn', 'Scheduler rejected incoming request', {
+      client: clientName,
+      method,
+      path,
+      status,
+      admission_advice: admissionPreview.advice,
+      reason_codes: admissionPreview.reason_codes,
+    })
+    if (config.logging.audit) {
+      audit(clientName, method, path, status)
+    }
+    return
+  }
+
   const lease = scheduler.beginRequest({
     client_name: clientName,
     method,
@@ -286,4 +317,18 @@ function buildVerificationPayload(config: Config) {
       billing_header: rewritten.system[0].text,
     },
   }
+}
+
+function shouldRejectAdmission(config: Config, preview: AdmissionPreview): boolean {
+  const mode = config.admission_control?.enforcement_mode || 'observe-only'
+  if (mode === 'observe-only') {
+    return false
+  }
+  if (mode === 'reject-block-new') {
+    return preview.advice === 'BLOCK_NEW'
+  }
+  if (mode === 'reject-queue-preferred') {
+    return preview.advice !== 'OPEN'
+  }
+  return false
 }

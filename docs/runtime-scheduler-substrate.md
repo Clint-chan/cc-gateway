@@ -171,6 +171,32 @@ This is still observe-only.
 
 It does not yet reject or queue requests, but it gives the runtime, future control plane, and future UI a shared explanation model instead of making each layer infer risk independently.
 
+### Optional Enforcement Hook
+
+The runtime now also exposes a small enforcement hook above that advisory layer.
+
+Config shape:
+
+```yaml
+admission_control:
+  enforcement_mode: observe-only
+  reject_status_code: 429
+```
+
+Current modes:
+
+- `observe-only`
+- `reject-block-new`
+- `reject-queue-preferred`
+
+This hook is intentionally narrow:
+
+- it does not implement queueing
+- it does not reschedule to another account
+- it only gives the gateway a controlled way to reject requests when operators explicitly opt in
+
+This is the correct interim step before a real queue, cooldown, or multi-account selector exists.
+
 ## Health Surface
 
 `/_health` now includes a scheduler snapshot with:
@@ -216,7 +242,7 @@ This substrate does **not** yet do:
 - drain/circuit-breaker enforcement
 - sticky proxy failover sets
 
-Even though the scheduler now **derives** admission advice, it still does not enforce budget-aware admission.
+Even though the scheduler now **derives** admission advice, it still does not implement real queueing or multi-account budget-aware admission.
 
 It also does not actively poll `/api/oauth/usage`; it only ingests that response when the path is proxied through the gateway or an operator probes it directly.
 
@@ -239,6 +265,5 @@ So the runtime currently does the right smaller thing:
 The next scheduler work should build on this substrate in order:
 
 1. add session-affinity-aware dispatch interfaces
-2. turn observe-only admission advice into optional enforcement hooks
-3. combine advice with queueing, drain, and cooldown policy
-4. only then add multi-account selection
+2. combine the enforcement hook with real queueing, drain, and cooldown policy
+3. only then add multi-account selection

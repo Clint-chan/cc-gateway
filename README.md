@@ -117,6 +117,14 @@ capacity_profile:
   drain_threshold: 0.9
 ```
 
+Optional admission enforcement also lives in `config.yaml`:
+
+```yaml
+admission_control:
+  enforcement_mode: observe-only
+  reject_status_code: 429
+```
+
 ### 4. Verify
 
 ```bash

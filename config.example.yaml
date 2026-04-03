@@ -39,6 +39,12 @@ capacity_profile:
   peak_hour_multiplier: 1.25
   drain_threshold: 0.9
 
+# Optional enforcement hook layered on top of the observe-only scheduler.
+# Keep this at observe-only for normal operation until queueing/cooldown policy is ready.
+admission_control:
+  enforcement_mode: observe-only
+  reject_status_code: 429
+
 auth:
   tokens:
     - name: "${GATEWAY_CLIENT_PRIMARY_NAME:-local-dev}"

@@ -69,6 +69,7 @@ What is already true:
 - the first file-backed fingerprint asset layer has started
 - the runtime can now observe both live limiter headers and structured `/api/oauth/usage` snapshots
 - the runtime can now expose observe-only admission advice and reason codes from those signals
+- the runtime now has a narrow optional enforcement hook above that advice
 
 What is still missing:
 

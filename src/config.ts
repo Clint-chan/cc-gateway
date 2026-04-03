@@ -31,6 +31,10 @@ export type Config = {
     peak_hour_multiplier?: number
     drain_threshold?: number
   }
+  admission_control?: {
+    enforcement_mode?: 'observe-only' | 'reject-block-new' | 'reject-queue-preferred'
+    reject_status_code?: number
+  }
   auth: {
     tokens: TokenEntry[]
   }
@@ -199,6 +203,9 @@ function normalizeOptionalStrings(config: Config): void {
   if (config.capacity_profile?.drain_threshold != null) {
     config.capacity_profile.drain_threshold = Number(config.capacity_profile.drain_threshold)
   }
+  if (config.admission_control?.reject_status_code != null) {
+    config.admission_control.reject_status_code = Number(config.admission_control.reject_status_code)
+  }
 }
 
 function loadYamlWithEnv<T>(path: string): T {
@@ -288,6 +295,11 @@ export function loadConfig(configPath?: string): Config {
   if (config.capacity_profile?.drain_threshold != null) {
     if (config.capacity_profile.drain_threshold <= 0 || config.capacity_profile.drain_threshold > 1) {
       throw new Error('config: capacity_profile.drain_threshold must be within (0, 1]')
+    }
+  }
+  if (config.admission_control?.reject_status_code != null) {
+    if (config.admission_control.reject_status_code < 400 || config.admission_control.reject_status_code > 599) {
+      throw new Error('config: admission_control.reject_status_code must be within [400, 599]')
     }
   }
 

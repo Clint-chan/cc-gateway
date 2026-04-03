@@ -280,5 +280,55 @@ test('prefers queueing when active sessions reach the account capacity hint', ()
   leaseB.complete(200)
 })
 
+test('previewIncomingAdmission blocks when retry-after is active', () => {
+  const scheduler = createScheduler(config)
+  const lease = scheduler.beginRequest({
+    client_name: 'tester',
+    method: 'POST',
+    path: '/v1/messages',
+    headers: {},
+    body: Buffer.from(JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] })),
+  })
+
+  lease.complete(429, {
+    'anthropic-ratelimit-unified-chat-utilization': '1',
+    'retry-after': '120',
+  })
+
+  const preview = scheduler.previewIncomingAdmission()
+  assert.equal(preview.advice, 'BLOCK_NEW')
+  assert.equal(preview.retry_after_seconds, 120)
+  assert.deepEqual(preview.reason_codes, [
+    'live_retry_after',
+    'live_utilization_above_drain_threshold',
+  ])
+})
+
+test('previewIncomingAdmission uses projected concurrency for queue preference', () => {
+  const scheduler = createScheduler(config)
+  const leaseA = scheduler.beginRequest({
+    client_name: 'tester',
+    method: 'POST',
+    path: '/v1/messages',
+    headers: {},
+    body: Buffer.from(JSON.stringify({ messages: [{ role: 'user', content: 'hello-a' }] })),
+  })
+  const leaseB = scheduler.beginRequest({
+    client_name: 'tester',
+    method: 'POST',
+    path: '/v1/messages',
+    headers: {},
+    body: Buffer.from(JSON.stringify({ messages: [{ role: 'user', content: 'hello-b' }] })),
+  })
+  const preview = scheduler.previewIncomingAdmission()
+
+  assert.equal(preview.projected_active_sessions, 3)
+  assert.equal(preview.advice, 'QUEUE_PREFERRED')
+  assert.deepEqual(preview.reason_codes, ['active_leases_present', 'capacity_hint_reached'])
+
+  leaseA.complete(200)
+  leaseB.complete(200)
+})
+
 console.log(`\n${passed} passed, ${failed} failed\n`)
 if (failed > 0) process.exit(1)

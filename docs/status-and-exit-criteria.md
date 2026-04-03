@@ -132,6 +132,7 @@
 - scheduler substrate 已经开始吸收 upstream rate-limit 头并暴露本地 budget state
 - scheduler substrate 已经开始吸收 `/api/oauth/usage` 并暴露结构化 usage snapshot
 - scheduler substrate 已经开始暴露 observe-only 的 `admission_advice` 和 reason codes
+- runtime 已经具备可选的 admission enforcement hook，但默认仍是 observe-only
 
 未完成：
 
