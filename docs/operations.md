@@ -199,6 +199,22 @@ Expected behavior:
 - returns a sample before/after payload
 - confirms how `device_id`, prompt environment text, and billing header are rewritten
 
+### Structured usage probe
+
+The Claude Code `/usage` screen is backed by `GET /api/oauth/usage`.
+
+For repeatable research or operator checks, probe the protocol directly instead of driving the interactive TUI:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\probe-usage-via-gateway.ps1
+```
+
+Expected behavior:
+
+- returns the current `five_hour` and weekly usage windows
+- writes a JSON payload to a temp path or explicit `-OutputPath`
+- updates the scheduler's in-memory `usage_snapshot`
+
 ## Local Proxy Requirements
 
 For this Windows workstation, local debugging only works reliably when the spawned process explicitly inherits the local proxy settings.

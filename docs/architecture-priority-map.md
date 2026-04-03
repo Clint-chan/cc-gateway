@@ -67,6 +67,7 @@ What is already true:
 - a report generator exists for current telemetry evidence
 - a first outer maintenance entrypoint now exists
 - the first file-backed fingerprint asset layer has started
+- the runtime can now observe both live limiter headers and structured `/api/oauth/usage` snapshots
 
 What is still missing:
 

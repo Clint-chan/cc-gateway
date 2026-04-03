@@ -172,5 +172,65 @@ test('marks account drained when upstream signals quota exhaustion', () => {
   assert.equal(snapshot.threshold_surpassed, true)
 })
 
+test('observes structured usage snapshots from /api/oauth/usage', () => {
+  const scheduler = createScheduler(config)
+  const lease = scheduler.beginRequest({
+    client_name: 'tester',
+    method: 'GET',
+    path: '/api/oauth/usage',
+    headers: {},
+    body: Buffer.alloc(0),
+  })
+
+  lease.complete(200, {}, Buffer.from(JSON.stringify({
+    five_hour: {
+      utilization: 91,
+      resets_at: '2026-04-04T12:00:00Z',
+    },
+    seven_day: {
+      utilization: 40,
+      resets_at: '2026-04-08T00:00:00Z',
+    },
+    seven_day_sonnet: {
+      utilization: 82,
+      resets_at: '2026-04-08T00:00:00Z',
+    },
+    extra_usage: {
+      is_enabled: true,
+      monthly_limit: 50,
+      used_credits: 12.5,
+      utilization: 25,
+    },
+  })))
+
+  const snapshot = scheduler.snapshot()
+  assert.equal(snapshot.usage_pressure_state, 'LIMITED')
+  assert.equal(snapshot.usage_snapshot?.five_hour?.utilization, 0.91)
+  assert.equal(snapshot.usage_snapshot?.seven_day?.utilization, 0.4)
+  assert.equal(snapshot.usage_snapshot?.seven_day_sonnet?.utilization, 0.82)
+  assert.equal(snapshot.usage_snapshot?.extra_usage?.is_enabled, true)
+  assert.equal(snapshot.usage_snapshot?.extra_usage?.utilization, 0.25)
+})
+
+test('marks usage pressure exhausted when usage payload reaches 100 percent', () => {
+  const scheduler = createScheduler(config)
+  const lease = scheduler.beginRequest({
+    client_name: 'tester',
+    method: 'GET',
+    path: '/api/oauth/usage',
+    headers: {},
+    body: Buffer.alloc(0),
+  })
+
+  lease.complete(200, {}, Buffer.from(JSON.stringify({
+    seven_day: {
+      utilization: 100,
+      resets_at: '2026-04-08T00:00:00Z',
+    },
+  })))
+
+  assert.equal(scheduler.snapshot().usage_pressure_state, 'EXHAUSTED')
+})
+
 console.log(`\n${passed} passed, ${failed} failed\n`)
 if (failed > 0) process.exit(1)

@@ -177,6 +177,35 @@
   - 当前矩阵只冻结到 `managed-oauth` 的 via-gateway side-channel，不代表 `external-auth-token` 下一定等价
   - 如果 upstream 扩展 eval schema，必须先更新字段目标清单，再重新生成矩阵
 
+### A-000e Usage 余额面接入 scheduler
+
+- 日期：2026-04-04
+- 证据：
+  - [usage.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/usage.ts)
+  - [Usage.tsx](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/components/Settings/Usage.tsx)
+  - [usage-balance-signal.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/usage-balance-signal.md)
+- 当前差异：
+  - 之前 scheduler 只会吸收 `/v1/messages` 响应头里的 live limiter 信号。
+  - 这意味着它知道“当前请求是否快撞限额”，但不知道 Claude Code `/usage` 那套结构化 5 小时 / 7 天余额视图。
+- 处理动作：
+  - 让 gateway 在代理 `GET /api/oauth/usage` 时收集响应体，并交给 scheduler 解析。
+  - 新增了结构化 `usage_snapshot` 和 `usage_pressure_state`。
+  - 新增可复跑探针：
+    - [probe-usage-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-usage-via-gateway.ps1)
+- 回归验证：
+  - `npm run build`
+  - `npm test`
+  - 临时 `9445` 实例上实打：
+    - `GET /api/oauth/usage`
+    - 随后 `/_health` 已出现：
+      - `usage_pressure_state`
+      - `usage_observed_at`
+      - `usage_snapshot.five_hour`
+      - `usage_snapshot.seven_day`
+- 剩余风险：
+  - 当前仍是 observe-only，不会基于 usage snapshot 做 admission 或 queueing。
+  - 这条信号只能在 `/api/oauth/usage` 被代理或被主动探测时更新，还不是后台定时拉取。
+
 ### A-001 显式代理链路
 
 - 日期：2026-04-03

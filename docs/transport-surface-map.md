@@ -186,6 +186,13 @@
   - [referral.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/referral.ts)
   - [overageCreditGrant.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/overageCreditGrant.ts)
   - [adminRequests.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/api/adminRequests.ts)
+- 当前补充：
+  - `/api/oauth/usage` 是 Claude Code `/usage` 对应的结构化余额面
+  - 生产配置下它仍然落在 `BASE_API_URL=https://api.anthropic.com`
+  - 当前 gateway 已可代理这条路径，并把结果吸收到 scheduler 的 `usage_snapshot`
+- 备注：
+  - 这条面适合做账号池预算视图
+  - 它不能替代 `/v1/messages` 响应头里的 live limiter 信号
 
 #### 3.4 policy limits / remote managed settings / settings sync / team memory sync
 

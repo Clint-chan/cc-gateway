@@ -78,6 +78,26 @@
 - 所以它现在不应再被写成“偶发一次”，而应明确记成 `delay-sensitive`
 - `event_logging` 的专项阈值方法统一看 [event-logging-threshold-workflow.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/event-logging-threshold-workflow.md)
 
+### 补充：usage 余额面
+
+`/api/oauth/usage` 不属于当前固定的 `claude -p "hello"` 最小 probe。
+
+它对应的是 Claude Code 的 `/usage` 页面，因此单独冻结为：
+
+- surface:
+  `/api/oauth/usage`
+- owner:
+  `gateway-mainline`
+- current gateway behavior:
+  已可代理，并已接入 scheduler 的 `usage_snapshot`
+- recommended probe:
+  [probe-usage-via-gateway.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/probe-usage-via-gateway.ps1)
+
+这条面和 `bootstrap / penguin / MCP / eval / event_logging` 的区别是：
+
+- 它不是“最小 hello probe 自然带出来的 side channel”
+- 它是“需要显式触发的结构化余额面”
+
 ### Grove 说明
 
 `/api/oauth/account/settings` 和 `/api/claude_code_grove` 需要单独理解。

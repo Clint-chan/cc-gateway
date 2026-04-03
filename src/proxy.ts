@@ -175,6 +175,7 @@ async function handleRequest(
 
   // Forward to upstream
   const upstreamUrl = new URL(path, upstream)
+  const shouldCaptureResponseBody = upstreamUrl.pathname === '/api/oauth/usage'
   if (upstreamUrl.pathname === '/v1/messages' && !upstreamUrl.searchParams.has('beta')) {
     upstreamUrl.searchParams.set('beta', 'true')
   }
@@ -192,6 +193,7 @@ async function handleRequest(
     },
     (proxyRes) => {
       const status = proxyRes.statusCode || 502
+      const capturedResponseChunks: Buffer[] = []
 
       const responseHeaders = { ...proxyRes.headers }
       delete responseHeaders['transfer-encoding']
@@ -200,9 +202,17 @@ async function handleRequest(
 
       // Stream response directly (SSE for Claude responses)
       proxyRes.pipe(res)
+      if (shouldCaptureResponseBody) {
+        proxyRes.on('data', (chunk) => {
+          capturedResponseChunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
+        })
+      }
 
       proxyRes.on('end', () => {
-        lease.complete(status, proxyRes.headers)
+        const responseBody = shouldCaptureResponseBody
+          ? Buffer.concat(capturedResponseChunks)
+          : undefined
+        lease.complete(status, proxyRes.headers, responseBody)
       })
 
       if (config.logging.audit) {

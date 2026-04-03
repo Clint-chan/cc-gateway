@@ -130,6 +130,7 @@
 - 指纹资产层已经开始 file-backed 拆分
 - 单账号 runtime 已经开始走账号中心化 scheduler substrate
 - scheduler substrate 已经开始吸收 upstream rate-limit 头并暴露本地 budget state
+- scheduler substrate 已经开始吸收 `/api/oauth/usage` 并暴露结构化 usage snapshot
 
 未完成：
 

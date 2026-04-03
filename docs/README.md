@@ -31,6 +31,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [runtime-scheduler-substrate.md](./runtime-scheduler-substrate.md)
   Current single-account runtime scheduler substrate, including observe-only capacity state, sticky affinity tracking, and health-surface exposure.
 
+- [usage-balance-signal.md](./usage-balance-signal.md)
+  Structured usage and balance signal for 5-hour and weekly windows, plus how it feeds the scheduler's observe-only budget model.
+
 - [data-model.md](./data-model.md)
   Core entities for accounts, fingerprints, proxies, clients, policies, sessions, and audit records.
 

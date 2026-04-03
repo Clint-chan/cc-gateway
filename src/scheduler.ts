@@ -7,6 +7,29 @@ export type BusyState = 'IDLE' | 'BUSY'
 export type DrainState = 'ACCEPTING' | 'DRAINING' | 'DRAINED'
 export type AdmissionMode = 'observe-only'
 export type QuotaState = 'UNKNOWN' | 'NORMAL' | 'LIMITED' | 'EXHAUSTED'
+export type UsagePressureState = 'UNKNOWN' | 'NORMAL' | 'LIMITED' | 'EXHAUSTED'
+
+export type UsageLimitSnapshot = {
+  utilization: number
+  resets_at?: string
+}
+
+export type ExtraUsageSnapshot = {
+  is_enabled: boolean
+  monthly_limit?: number
+  used_credits?: number
+  utilization?: number
+}
+
+export type UsageSnapshot = {
+  observed_at: string
+  pressure_state: UsagePressureState
+  five_hour?: UsageLimitSnapshot
+  seven_day?: UsageLimitSnapshot
+  seven_day_sonnet?: UsageLimitSnapshot
+  seven_day_opus?: UsageLimitSnapshot
+  extra_usage?: ExtraUsageSnapshot
+}
 
 export type CapacityProfile = {
   id: string
@@ -35,6 +58,7 @@ export type RuntimeAccount = {
     retry_after_seconds?: number
     observed_at?: string
     raw_header_count: number
+    usage?: UsageSnapshot
   }
 }
 
@@ -71,6 +95,9 @@ export type SchedulerSnapshot = {
   peak_hour_multiplier?: number
   drain_threshold: number
   raw_budget_header_count: number
+  usage_pressure_state?: UsagePressureState
+  usage_observed_at?: string
+  usage_snapshot?: Omit<UsageSnapshot, 'observed_at' | 'pressure_state'>
   proxy_bound: boolean
 }
 
@@ -84,11 +111,12 @@ type SchedulingContext = {
 
 type ActiveLease = {
   affinity_key?: string
+  path: string
 }
 
 export type RequestLease = {
   decision: RoutingDecision
-  complete: (status: number, headers?: IncomingHttpHeaders) => void
+  complete: (status: number, headers?: IncomingHttpHeaders, responseBody?: Buffer) => void
   fail: (status: number, error?: Error) => void
 }
 
@@ -122,6 +150,7 @@ export class SingleAccountScheduler {
 
     this.leases.set(leaseId, {
       affinity_key: affinity.key,
+      path: context.path,
     })
     this.refreshBusyState()
 
@@ -139,8 +168,8 @@ export class SingleAccountScheduler {
 
     return {
       decision,
-      complete: (status, headers) => this.finishLease(leaseId, status, headers),
-      fail: (status, error) => this.finishLease(leaseId, status, undefined, error),
+      complete: (status, headers, responseBody) => this.finishLease(leaseId, status, headers, responseBody),
+      fail: (status, error) => this.finishLease(leaseId, status, undefined, undefined, error),
     }
   }
 
@@ -166,6 +195,17 @@ export class SingleAccountScheduler {
       peak_hour_multiplier: this.account.capacity_profile.peak_hour_multiplier,
       drain_threshold: this.account.capacity_profile.drain_threshold,
       raw_budget_header_count: this.account.budget_state.raw_header_count,
+      usage_pressure_state: this.account.budget_state.usage?.pressure_state,
+      usage_observed_at: this.account.budget_state.usage?.observed_at,
+      usage_snapshot: this.account.budget_state.usage
+        ? {
+            five_hour: this.account.budget_state.usage.five_hour,
+            seven_day: this.account.budget_state.usage.seven_day,
+            seven_day_sonnet: this.account.budget_state.usage.seven_day_sonnet,
+            seven_day_opus: this.account.budget_state.usage.seven_day_opus,
+            extra_usage: this.account.budget_state.usage.extra_usage,
+          }
+        : undefined,
       proxy_bound: Boolean(this.account.proxy_url),
     }
   }
@@ -174,9 +214,11 @@ export class SingleAccountScheduler {
     leaseId: string,
     status: number,
     headers?: IncomingHttpHeaders,
+    responseBody?: Buffer,
     error?: Error,
   ) {
-    this.observeResponseHeaders(headers)
+    const lease = this.leases.get(leaseId)
+    this.observeResponse(lease?.path, headers, responseBody)
     this.leases.delete(leaseId)
     this.refreshBusyState()
 
@@ -191,6 +233,11 @@ export class SingleAccountScheduler {
 
   private refreshBusyState() {
     this.account.busy_state = this.leases.size > 0 ? 'BUSY' : 'IDLE'
+  }
+
+  private observeResponse(path?: string, headers?: IncomingHttpHeaders, responseBody?: Buffer) {
+    this.observeResponseHeaders(headers)
+    this.observeUsageResponse(path, responseBody)
   }
 
   private observeResponseHeaders(headers?: IncomingHttpHeaders) {
@@ -232,6 +279,26 @@ export class SingleAccountScheduler {
       rolling_window_utilization: this.account.budget_state.rolling_window_utilization,
       retry_after_seconds: this.account.budget_state.retry_after_seconds,
       raw_header_count: this.account.budget_state.raw_header_count,
+    })
+  }
+
+  private observeUsageResponse(path?: string, responseBody?: Buffer) {
+    if (!path?.startsWith('/api/oauth/usage') || !responseBody || responseBody.length === 0) {
+      return
+    }
+
+    const usageSnapshot = parseUsageSnapshot(responseBody, this.account.capacity_profile)
+    if (!usageSnapshot) return
+
+    this.account.budget_state.usage = usageSnapshot
+
+    log('debug', 'Scheduler observed usage snapshot', {
+      account_id: this.account.id,
+      usage_pressure_state: usageSnapshot.pressure_state,
+      five_hour_utilization: usageSnapshot.five_hour?.utilization,
+      seven_day_utilization: usageSnapshot.seven_day?.utilization,
+      seven_day_sonnet_utilization: usageSnapshot.seven_day_sonnet?.utilization,
+      seven_day_opus_utilization: usageSnapshot.seven_day_opus?.utilization,
     })
   }
 }
@@ -359,14 +426,139 @@ function parseBudgetSignal(headers: IncomingHttpHeaders): {
   }
 }
 
+function parseUsageSnapshot(
+  responseBody: Buffer,
+  capacityProfile: CapacityProfile,
+): UsageSnapshot | undefined {
+  try {
+    const payload = JSON.parse(responseBody.toString('utf-8')) as {
+      five_hour?: { utilization?: number | null; resets_at?: string | null } | null
+      seven_day?: { utilization?: number | null; resets_at?: string | null } | null
+      seven_day_sonnet?: { utilization?: number | null; resets_at?: string | null } | null
+      seven_day_opus?: { utilization?: number | null; resets_at?: string | null } | null
+      extra_usage?: {
+        is_enabled?: boolean
+        monthly_limit?: number | null
+        used_credits?: number | null
+        utilization?: number | null
+      } | null
+    }
+
+    const usage = {
+      five_hour: normalizeUsageLimit(payload.five_hour),
+      seven_day: normalizeUsageLimit(payload.seven_day),
+      seven_day_sonnet: normalizeUsageLimit(payload.seven_day_sonnet),
+      seven_day_opus: normalizeUsageLimit(payload.seven_day_opus),
+      extra_usage: normalizeExtraUsage(payload.extra_usage),
+    }
+
+    const pressureState = deriveUsagePressureState(usage, capacityProfile)
+    if (
+      !usage.five_hour &&
+      !usage.seven_day &&
+      !usage.seven_day_sonnet &&
+      !usage.seven_day_opus &&
+      !usage.extra_usage
+    ) {
+      return undefined
+    }
+
+    return {
+      observed_at: new Date().toISOString(),
+      pressure_state: pressureState,
+      ...usage,
+    }
+  } catch {
+    return undefined
+  }
+}
+
+function normalizeUsageLimit(
+  limit?: { utilization?: number | null; resets_at?: string | null } | null,
+): UsageLimitSnapshot | undefined {
+  if (!limit || limit.utilization == null) return undefined
+
+  const utilization = normalizeUtilizationPercent(limit.utilization)
+  if (utilization == null) return undefined
+
+  return {
+    utilization,
+    resets_at: limit.resets_at || undefined,
+  }
+}
+
+function normalizeExtraUsage(
+  extra?: {
+    is_enabled?: boolean
+    monthly_limit?: number | null
+    used_credits?: number | null
+    utilization?: number | null
+  } | null,
+): ExtraUsageSnapshot | undefined {
+  if (!extra) return undefined
+
+  return {
+    is_enabled: Boolean(extra.is_enabled),
+    monthly_limit: parseMaybeNumber(extra.monthly_limit),
+    used_credits: parseMaybeNumber(extra.used_credits),
+    utilization: normalizeUtilizationPercent(extra.utilization),
+  }
+}
+
+function deriveUsagePressureState(
+  usage: {
+    five_hour?: UsageLimitSnapshot
+    seven_day?: UsageLimitSnapshot
+    seven_day_sonnet?: UsageLimitSnapshot
+    seven_day_opus?: UsageLimitSnapshot
+  },
+  capacityProfile: CapacityProfile,
+): UsagePressureState {
+  const rollingWindow = usage.five_hour?.utilization
+  const weeklyWindow = [
+    usage.seven_day?.utilization,
+    usage.seven_day_sonnet?.utilization,
+    usage.seven_day_opus?.utilization,
+  ].filter((value): value is number => value != null)
+
+  const maxWeekly = weeklyWindow.length > 0 ? Math.max(...weeklyWindow) : undefined
+  const candidates = [rollingWindow, maxWeekly].filter((value): value is number => value != null)
+
+  if (candidates.length === 0) {
+    return 'UNKNOWN'
+  }
+  if (candidates.some(value => value >= 1)) {
+    return 'EXHAUSTED'
+  }
+  if (
+    (rollingWindow != null &&
+      capacityProfile.rolling_window_budget_hint != null &&
+      rollingWindow >= capacityProfile.rolling_window_budget_hint) ||
+    (maxWeekly != null &&
+      capacityProfile.weekly_budget_hint != null &&
+      maxWeekly >= capacityProfile.weekly_budget_hint)
+  ) {
+    return 'LIMITED'
+  }
+  return 'NORMAL'
+}
+
+function normalizeUtilizationPercent(value?: number | null): number | undefined {
+  const parsed = parseMaybeNumber(value)
+  if (parsed == null) return undefined
+  if (parsed < 0) return 0
+  if (parsed <= 1) return parsed
+  return Math.min(parsed / 100, 1)
+}
+
 function firstHeaderValue(value: string | string[] | undefined): string | undefined {
   if (typeof value === 'string') return value
   if (Array.isArray(value) && value.length > 0) return value[0]
   return undefined
 }
 
-function parseMaybeNumber(value?: string): number | undefined {
-  if (!value) return undefined
+function parseMaybeNumber(value?: string | number | null): number | undefined {
+  if (value == null || value === '') return undefined
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : undefined
 }

@@ -24,6 +24,7 @@ Current implementation:
 - one sticky-affinity map
 - one active-lease map for request lifecycle tracking
 - one in-memory budget-state observer fed by upstream rate-limit headers
+- one in-memory usage observer fed by `/api/oauth/usage`
 
 This means the runtime already has explicit concepts for:
 
@@ -36,6 +37,7 @@ This means the runtime already has explicit concepts for:
 - quota state
 - drain state
 - rolling-window utilization observation
+- structured 5-hour / weekly usage snapshots
 
 ## Why This Exists Before Account Pool
 
@@ -121,6 +123,23 @@ Current observed fields:
 This does not yet block requests.
 It only exposes the right account state so later queueing, drain, cooldown, and capacity-aware routing have a stable foundation.
 
+### Structured Usage Observation
+
+When the runtime proxies `GET /api/oauth/usage`, the scheduler now ingests the structured usage payload into account state.
+
+Current observed fields:
+
+- `five_hour`
+- `seven_day`
+- `seven_day_sonnet`
+- `seven_day_opus`
+- `extra_usage`
+- derived `usage_pressure_state`
+
+This is the scheduler's account-budget view, not the live limiter view.
+
+It is useful because it exposes the actual usage windows that back the Claude Code `/usage` screen.
+
 ## Health Surface
 
 `/_health` now includes a scheduler snapshot with:
@@ -144,6 +163,9 @@ It only exposes the right account state so later queueing, drain, cooldown, and 
 - `peak_hour_multiplier`
 - `drain_threshold`
 - `raw_budget_header_count`
+- `usage_pressure_state`
+- `usage_observed_at`
+- `usage_snapshot`
 - `proxy_bound`
 
 This is useful for runtime inspection and later operator-facing health views.
@@ -160,6 +182,8 @@ This substrate does **not** yet do:
 - sticky proxy failover sets
 
 Even though the scheduler now **observes** budget state, it still does not enforce budget-aware admission.
+
+It also does not actively poll `/api/oauth/usage`; it only ingests that response when the path is proxied through the gateway or an operator probes it directly.
 
 Those remain future scheduler work.
 
@@ -181,6 +205,6 @@ The next scheduler work should build on this substrate in order:
 
 1. add account Busy/Idle/Drain reason codes
 2. add session-affinity-aware dispatch interfaces
-3. extend budget observation into admission decisions
+3. combine limiter headers and structured usage into admission decisions
 4. add queueing, drain, and cooldown policies
 5. only then add multi-account selection
