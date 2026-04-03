@@ -1,5 +1,6 @@
 import { request as httpsRequest } from 'https'
 import { log } from './logger.js'
+import { getProxyAgent } from './net.js'
 
 const TOKEN_URL = 'https://platform.claude.com/v1/oauth/token'
 const CLIENT_ID = '9d1c250a-e61b-44d9-88ed-5944d1962f5e'
@@ -24,13 +25,36 @@ let cachedTokens: OAuthTokens | null = null
  * The gateway holds the refresh token and manages access token lifecycle.
  * Client machines never need to contact platform.claude.com.
  */
-export async function initOAuth(refreshToken: string): Promise<void> {
-  log('info', 'Refreshing OAuth token...')
-  cachedTokens = await refreshOAuthToken(refreshToken)
-  log('info', `OAuth token acquired, expires at ${new Date(cachedTokens.expiresAt).toISOString()}`)
+export async function initOAuth(oauth: {
+  access_token?: string
+  refresh_token: string
+  expires_at?: number
+}): Promise<void> {
+  const now = Date.now()
+  const expiresAt = oauth.expires_at ?? 0
+  const fiveMinutes = 5 * 60 * 1000
 
-  // Auto-refresh 5 minutes before expiry
-  scheduleRefresh(refreshToken)
+  if (oauth.access_token && expiresAt > now + fiveMinutes) {
+    cachedTokens = {
+      accessToken: oauth.access_token,
+      refreshToken: oauth.refresh_token,
+      expiresAt,
+    }
+    const remaining = Math.round((expiresAt - now) / 60_000)
+    log('info', `Using existing access token (expires in ${remaining} min)`)
+    scheduleRefresh(oauth.refresh_token)
+    return
+  }
+
+  if (oauth.access_token) {
+    log('info', 'Access token expired, refreshing...')
+  } else {
+    log('info', 'No access token provided, refreshing...')
+  }
+
+  cachedTokens = await refreshOAuthToken(oauth.refresh_token)
+  log('info', `OAuth token acquired, expires at ${new Date(cachedTokens.expiresAt).toISOString()}`)
+  scheduleRefresh(oauth.refresh_token)
 }
 
 function scheduleRefresh(refreshToken: string) {
@@ -77,12 +101,14 @@ function refreshOAuthToken(refreshToken: string): Promise<OAuthTokens> {
     })
 
     const url = new URL(TOKEN_URL)
+    const proxyAgent = getProxyAgent()
     const req = httpsRequest(
       {
         hostname: url.hostname,
         port: 443,
         path: url.pathname,
         method: 'POST',
+        agent: proxyAgent,
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': String(Buffer.byteLength(body)),

@@ -1,0 +1,99 @@
+2026-04-03T10:26:30.443Z [DEBUG] MDM settings load completed in 17ms
+2026-04-03T10:26:30.503Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Program Files\ClaudeCode\managed-settings.json
+2026-04-03T10:26:30.506Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Users\94503\Documents\GitHub\cc-gateway\.claude\settings.json
+2026-04-03T10:26:30.506Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Users\94503\Documents\GitHub\cc-gateway\.claude\settings.local.json
+2026-04-03T10:26:30.507Z [DEBUG] CA certs: Config fallback - globalEnv keys: , settingsEnv keys: none
+2026-04-03T10:26:30.626Z [DEBUG] [init] configureGlobalMTLS starting
+2026-04-03T10:26:30.627Z [DEBUG] [init] configureGlobalMTLS complete
+2026-04-03T10:26:30.627Z [DEBUG] [init] configureGlobalAgents starting
+2026-04-03T10:26:30.629Z [DEBUG] CA certs: useSystemCA=false, extraCertsPath=undefined
+2026-04-03T10:26:30.693Z [DEBUG] [init] configureGlobalAgents complete
+2026-04-03T10:26:30.758Z [DEBUG] Using bash path: "C:\Program Files\Git\bin\bash.exe"
+2026-04-03T10:26:30.760Z [DEBUG] Error log sink initialized
+2026-04-03T10:26:30.772Z [DEBUG] [claudeai-mcp] Missing user:mcp_servers scope (scopes=user:inference)
+2026-04-03T10:26:30.773Z [DEBUG] [STARTUP] Loading MCP configs...
+2026-04-03T10:26:30.789Z [DEBUG] [ToolSearch:optimistic] disabled: ANTHROPIC_BASE_URL=https://localhost:8443 is not a first-party Anthropic host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.
+2026-04-03T10:26:30.790Z [DEBUG] [STARTUP] Running setup()...
+2026-04-03T10:26:30.795Z [DEBUG] Loading skills from: managed=C:\Program Files\ClaudeCode\.claude\skills, user=C:\Users\94503\.claude\skills, project=[]
+2026-04-03T10:26:30.798Z [DEBUG] Error log sink initialized
+2026-04-03T10:26:30.963Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=C:\Users\94503\AppData\Roaming\npm\node_modules\@anthropic-ai\claude-code\vendor\ripgrep\x64-win32\rg.exe)
+2026-04-03T10:26:30.964Z [DEBUG] rg error (signal=null, code=2, stderr: rg: C:\Users\94503\.claude\commands: IO error for operation on C:\Users\94503\.claude\commands: 系统找不到指定的文件。 (os error 2)
+), 0 results
+2026-04-03T10:26:30.964Z [DEBUG] rg error (signal=null, code=2, stderr: rg: C:\Program Files\ClaudeCode\.claude\commands: IO error for operation on C:\Program Files\ClaudeCode\.claude\commands: 系统找不到指定的路径。 (os error 3)
+), 0 results
+2026-04-03T10:26:30.965Z [DEBUG] Loaded 0 unique skills (0 unconditional, 0 conditional, managed: 0, user: 0, project: 0, additional: 0, legacy commands: 0)
+2026-04-03T10:26:30.965Z [DEBUG] rg error (signal=null, code=2, stderr: rg: C:\Program Files\ClaudeCode\.claude\agents: IO error for operation on C:\Program Files\ClaudeCode\.claude\agents: 系统找不到指定的路径。 (os error 3)
+), 0 results
+2026-04-03T10:26:30.969Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2026-04-03T10:26:30.970Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-04-03T10:26:30.970Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2026-04-03T10:26:30.971Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-04-03T10:26:30.971Z [DEBUG] Total plugin skills loaded: 0
+2026-04-03T10:26:30.971Z [DEBUG] Total plugin commands loaded: 0
+2026-04-03T10:26:30.971Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills, 8 bundled skills, 0 builtin plugin skills
+2026-04-03T10:26:30.976Z [DEBUG] [STARTUP] setup() completed in 185ms
+2026-04-03T10:26:30.976Z [DEBUG] Cleared CA certificates cache
+2026-04-03T10:26:30.977Z [DEBUG] Cleared mTLS configuration cache
+2026-04-03T10:26:30.977Z [DEBUG] Cleared proxy agent cache
+2026-04-03T10:26:30.978Z [DEBUG] CA certs: useSystemCA=false, extraCertsPath=undefined
+2026-04-03T10:26:30.980Z [DEBUG] [STARTUP] Loading commands and agents...
+2026-04-03T10:26:31.117Z [DEBUG] rg error (signal=null, code=2, stderr: rg: C:\Users\94503\.claude\agents: IO error for operation on C:\Users\94503\.claude\agents: 系统找不到指定的文件。 (os error 2)
+), 0 results
+2026-04-03T10:26:31.118Z [DEBUG] Total plugin agents loaded: 0
+2026-04-03T10:26:31.119Z [DEBUG] [STARTUP] Commands and agents loaded in 139ms
+2026-04-03T10:26:31.120Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-04-03T10:26:31.120Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-04-03T10:26:31.120Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-04-03T10:26:31.122Z [DEBUG] Starting background startup prefetches
+2026-04-03T10:26:31.122Z [DEBUG] [Bootstrap] Skipped: Nonessential traffic disabled
+2026-04-03T10:26:31.123Z [DEBUG] [STARTUP] MCP configs resolved in 198ms (awaited at +350ms)
+2026-04-03T10:26:31.127Z [DEBUG] Total LSP servers loaded: 0
+2026-04-03T10:26:31.127Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2026-04-03T10:26:31.127Z [DEBUG] [LSP SERVER MANAGER] getAllLspServers returned 0 server(s)
+2026-04-03T10:26:31.127Z [DEBUG] LSP manager initialized with 0 servers
+2026-04-03T10:26:31.129Z [DEBUG] Cleared CA certificates cache
+2026-04-03T10:26:31.129Z [DEBUG] Cleared mTLS configuration cache
+2026-04-03T10:26:31.129Z [DEBUG] Cleared proxy agent cache
+2026-04-03T10:26:31.129Z [DEBUG] CA certs: useSystemCA=false, extraCertsPath=undefined
+2026-04-03T10:26:31.131Z [DEBUG] LSP server manager initialized successfully
+2026-04-03T10:26:31.132Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-04-03T10:26:31.145Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-04-03T10:26:31.147Z [DEBUG] [Perfetto] initializePerfettoTracing called, env value: undefined
+2026-04-03T10:26:31.147Z [DEBUG] [3P telemetry] isTelemetryEnabled=false (CLAUDE_CODE_ENABLE_TELEMETRY=undefined)
+2026-04-03T10:26:31.169Z [DEBUG] [auto-mode] hasAutoModeOptIn=false skipAutoPermissionPrompt: user=undefined local=undefined flag=undefined policy=undefined
+2026-04-03T10:26:31.169Z [DEBUG] [auto-mode] verifyAutoModeGateAccess: enabledState=opt-in disabledBySettings=false model=claude-sonnet-4-6 modelSupported=true disableFastModeBreakerFires=false carouselAvailable=false canEnterAuto=true
+2026-04-03T10:26:31.170Z [DEBUG] [auto-mode] verifyAutoModeGateAccess setAvailable: true -> false
+2026-04-03T10:26:31.186Z [DEBUG] Plugin autoupdate: skipped (auto-updater disabled)
+2026-04-03T10:26:31.194Z [DEBUG] [ScheduledTasks] scheduler start() — enabled=false, hasTasks=false
+2026-04-03T10:26:31.195Z [DEBUG] installPluginsForHeadless: starting
+2026-04-03T10:26:31.196Z [DEBUG] installPluginsForHeadless: no marketplaces declared
+2026-04-03T10:26:31.254Z [DEBUG] Watching for changes in setting files C:\Users\94503\.claude\settings.json...
+2026-04-03T10:26:31.278Z [DEBUG] Git remote URL: https://github.com/Clint-chan/cc-gateway.git
+2026-04-03T10:26:31.278Z [DEBUG] Parsed repository: github.com/Clint-chan/cc-gateway from URL: https://github.com/Clint-chan/cc-gateway.git
+2026-04-03T10:26:31.383Z [DEBUG] rg error (signal=null, code=2, stderr: rg: C:\Program Files\ClaudeCode\.claude\output-styles: IO error for operation on C:\Program Files\ClaudeCode\.claude\output-styles: 系统找不到指定的路径。 (os error 3)
+), 0 results
+2026-04-03T10:26:31.384Z [DEBUG] rg error (signal=null, code=2, stderr: rg: C:\Users\94503\.claude\output-styles: IO error for operation on C:\Users\94503\.claude\output-styles: 系统找不到指定的文件。 (os error 2)
+), 0 results
+2026-04-03T10:26:31.385Z [DEBUG] Total plugin output styles loaded: 0
+2026-04-03T10:26:31.390Z [DEBUG] rg error (signal=null, code=2, stderr: rg: C:\Users\94503\.claude\plugins\cache: IO error for operation on C:\Users\94503\.claude\plugins\cache: 系统找不到指定的文件。 (os error 2)
+), 0 results
+2026-04-03T10:26:31.434Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-04-03T10:26:31.435Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-04-03T10:26:31.436Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-04-03T10:26:31.437Z [DEBUG] Sending 4 skills via attachment (initial, 4 total sent)
+2026-04-03T10:26:31.440Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-04-03T10:26:31.444Z [WARN] [3P telemetry] Event dropped (no event logger initialized): user_prompt
+2026-04-03T10:26:31.457Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-04-03T10:26:31.465Z [DEBUG] autocompact: tokens=248 threshold=167000 effectiveWindow=180000
+2026-04-03T10:26:31.470Z [DEBUG] Tool search disabled: ToolSearchTool is not available (may have been disallowed via disallowedTools).
+2026-04-03T10:26:31.501Z [DEBUG] attribution header x-anthropic-billing-header: cc_version=2.1.91.9f2; cc_entrypoint=sdk-cli; cch=00000;
+2026-04-03T10:26:31.503Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-04-03T10:26:31.504Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-04-03T10:26:31.506Z [DEBUG] [API:request] Creating client, ANTHROPIC_CUSTOM_HEADERS present: true, has Authorization header: false
+2026-04-03T10:26:31.507Z [DEBUG] [API:auth] OAuth token check starting
+2026-04-03T10:26:31.509Z [DEBUG] [API:auth] OAuth token check complete
+2026-04-03T10:26:31.511Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-04-03T10:26:31.523Z [DEBUG] [API REQUEST] /v1/messages source=sdk
+2026-04-03T10:26:34.150Z [DEBUG] Stream started - received first chunk
+2026-04-03T10:26:34.491Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-04-03T10:26:34.497Z [DEBUG] LSP server manager shut down successfully

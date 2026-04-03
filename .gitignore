@@ -2,5 +2,10 @@ node_modules/
 dist/
 *.js.map
 .env
+.claude.json
 config.yaml
 certs/
+/reference
+*.out.log
+*.err.log
+mitm/__pycache__/

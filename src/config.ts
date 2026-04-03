@@ -18,11 +18,16 @@ export type Config = {
   upstream: {
     url: string
   }
+  network?: {
+    proxy_url?: string
+  }
   auth: {
     tokens: TokenEntry[]
   }
   oauth: {
+    access_token?: string
     refresh_token: string
+    expires_at?: number
   }
   identity: {
     device_id: string

@@ -112,7 +112,42 @@ export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 export CLAUDE_CODE_OAUTH_TOKEN="gateway-managed"
 
 # Authenticate to the gateway
-export ANTHROPIC_CUSTOM_HEADERS="Proxy-Authorization: Bearer YOUR_TOKEN"
+# Use x-api-key here. Proxy-Authorization conflicts with Claude Code's own proxy agent on Windows.
+export ANTHROPIC_CUSTOM_HEADERS="x-api-key: YOUR_TOKEN"
+```
+
+### Simpler per-user setup with `.claude.json`
+
+For testers, the easiest path is to create a local `.claude.json` and point Claude Code directly at the gateway.
+
+Example:
+
+```json
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://your-gateway-host:8443",
+    "ANTHROPIC_AUTH_TOKEN": "your-gateway-client-token",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
+  "hasCompletedOnboarding": true
+}
+```
+
+Reference file:
+
+- [.claude.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.json.example)
+
+Why this works:
+
+- `ANTHROPIC_BASE_URL` points Claude Code at the gateway
+- `ANTHROPIC_AUTH_TOKEN` is sent by Claude Code as bearer auth to the gateway
+- the gateway authenticates that client token, strips it, then injects the real upstream OAuth bearer token
+- the tester does not need to perform browser login against the official endpoint
+
+For local self-signed TLS testing only, testers may also need:
+
+```bash
+export NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
 Or run the interactive setup script:
@@ -179,7 +214,7 @@ Client machines                        CC Gateway                    Anthropic
 
 | Layer | Mechanism | What it prevents |
 |-------|-----------|-----------------|
-| Env vars | `ANTHROPIC_BASE_URL` + `DISABLE_NONESSENTIAL` + `OAUTH_TOKEN` | CC voluntarily routes to gateway, disables side channels, skips browser login |
+| Env vars | `ANTHROPIC_BASE_URL` + `DISABLE_NONESSENTIAL` + `OAUTH_TOKEN` + `ANTHROPIC_CUSTOM_HEADERS=x-api-key:...` | CC voluntarily routes to gateway, disables side channels, skips browser login |
 | Clash | Domain-based REJECT rules | Any accidental or future direct connections to Anthropic |
 | Gateway | Body + header + prompt rewriting | All 40+ fingerprint dimensions normalized to one device |
 

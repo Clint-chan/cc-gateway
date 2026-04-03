@@ -8,15 +8,17 @@ import { authenticate, initAuth } from './auth.js'
 import { getAccessToken } from './oauth.js'
 import { rewriteBody, rewriteHeaders } from './rewriter.js'
 import { audit, log } from './logger.js'
+import { getProxyAgent } from './net.js'
 
 export function startProxy(config: Config) {
   initAuth(config)
 
   const upstream = new URL(config.upstream.url)
   const useTls = config.server.tls?.cert && config.server.tls?.key
+  const proxyAgent = getProxyAgent()
 
   const handler = (req: IncomingMessage, res: ServerResponse) => {
-    handleRequest(req, res, config, upstream)
+    handleRequest(req, res, config, upstream, proxyAgent)
   }
 
   let server
@@ -46,6 +48,7 @@ async function handleRequest(
   res: ServerResponse,
   config: Config,
   upstream: URL,
+  proxyAgent?: ReturnType<typeof getProxyAgent>,
 ) {
   const method = req.method || 'GET'
   const path = req.url || '/'
@@ -84,7 +87,7 @@ async function handleRequest(
   const clientName = authenticate(req)
   if (!clientName) {
     res.writeHead(401, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ error: 'Unauthorized - provide Bearer token in Authorization or Proxy-Authorization header' }))
+    res.end(JSON.stringify({ error: 'Unauthorized - provide client token via x-api-key or Bearer auth' }))
     log('warn', `Unauthorized request: ${method} ${path}`)
     return
   }
@@ -120,16 +123,36 @@ async function handleRequest(
     config,
   )
 
-  // Inject the real OAuth token (replaces whatever the client sent)
+  // Current Claude Code sends first-party OAuth access tokens as Bearer auth.
+  // Preserve any CLI-provided beta headers, but ensure the OAuth beta is present.
   rewrittenHeaders['authorization'] = `Bearer ${oauthToken}`
+  delete rewrittenHeaders['x-api-key']
+
+  const oauthBeta = 'oauth-2025-04-20'
+  const currentBeta = typeof rewrittenHeaders['anthropic-beta'] === 'string'
+    ? rewrittenHeaders['anthropic-beta']
+    : ''
+  if (!currentBeta) {
+    rewrittenHeaders['anthropic-beta'] = oauthBeta
+  } else if (!currentBeta.split(',').map(v => v.trim()).includes(oauthBeta)) {
+    rewrittenHeaders['anthropic-beta'] = `${currentBeta},${oauthBeta}`
+  }
+
+  if (!rewrittenHeaders['x-app']) {
+    rewrittenHeaders['x-app'] = 'cli'
+  }
 
   // Forward to upstream
   const upstreamUrl = new URL(path, upstream)
+  if (upstreamUrl.pathname === '/v1/messages' && !upstreamUrl.searchParams.has('beta')) {
+    upstreamUrl.searchParams.set('beta', 'true')
+  }
 
   const proxyReq = httpsRequest(
     upstreamUrl,
     {
       method,
+      agent: proxyAgent,
       headers: {
         ...rewrittenHeaders,
         host: upstream.host,
