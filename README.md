@@ -96,6 +96,16 @@ docker-compose up -d
 - Docker Compose
 - future `admin-api` / `admin-web` services
 
+Fingerprint behavior can now be referenced as a reusable asset under:
+
+- [`profiles/fingerprints/`](/C:/Users/94503/Documents/GitHub/cc-gateway/profiles/fingerprints)
+
+The preferred runtime reference is now an asset ID, for example:
+
+```yaml
+fingerprint_profile: "example-darwin-arm64"
+```
+
 ### 4. Verify
 
 ```bash
@@ -161,6 +171,8 @@ Reference file:
 - [.claude.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.json.example)
 - [.claude.alignment.json.example](/C:/Users/94503/Documents/GitHub/cc-gateway/.claude.alignment.json.example)
 - [client-modes.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/client-modes.md)
+- [account-fingerprint-strategy.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/account-fingerprint-strategy.md)
+- [account-pool-scheduler-strategy.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/account-pool-scheduler-strategy.md)
 
 Why this works:
 
@@ -271,7 +283,7 @@ This project builds on:
 [license-url]: https://github.com/motiful/cc-gateway/blob/main/LICENSE
 [version-shield]: https://img.shields.io/badge/version-0.1.0--alpha-blue
 [version-url]: https://github.com/motiful/cc-gateway/releases
-[tests-shield]: https://img.shields.io/badge/tests-13%20passed-brightgreen
+[tests-shield]: https://img.shields.io/badge/tests-17%20passed-brightgreen
 [tests-url]: https://github.com/motiful/cc-gateway/blob/main/tests/unit/rewriter.test.ts
 [twitter-shield]: https://img.shields.io/badge/follow-%40whiletrue0x-1DA1F2?logo=x&logoColor=white
 [twitter-url]: https://x.com/whiletrue0x

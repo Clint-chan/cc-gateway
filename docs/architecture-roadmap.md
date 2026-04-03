@@ -87,6 +87,16 @@ This becomes the backend for the admin UI and the automation layer.
 Responsibility:
 
 - choose account by policy
+- enforce account-centric routing instead of user-centric routing
+- keep one account bound to one stable outward fingerprint story
+- keep one account bound to one sticky dedicated proxy or a very narrow sticky proxy set
+- parse rate-limit and utilization headers into local budget state
+- apply peak-hour down-weighting and capacity-aware throttling
+- enforce global Busy/Idle ownership per account
+- preserve session affinity so follow-up turns stay on the same account
+- queue work when no safe account is immediately available
+- honor `retry-after` and backoff rules
+- drain accounts before hard quota cliffs or circuit-breaker conditions
 - bind account to a fingerprint profile
 - bind account or request to a proxy node
 - enforce cooldown, concurrency, quota, or region rules
@@ -126,13 +136,15 @@ Fields:
 - `deviceId`
 - `fingerprintProfileId`
 - `defaultProxyId`
+- `capacityProfileId`
 - `tags`
 - `notes`
 
 Notes:
 
 - one account can have one default fingerprint profile
-- one account can also be routed dynamically to different proxies
+- one account should usually keep one stable outward fingerprint story even when shared by multiple end users
+- one account can also be routed dynamically to different proxies, but only inside a deliberately sticky and isolated proxy set
 - sensitive tokens should be encrypted at rest
 
 ### Fingerprint Profile
@@ -214,6 +226,27 @@ Examples:
 - machine A always uses account A plus proxy group west-resi
 - machine B can use any warm account tagged `team-1`
 - burst traffic uses least-loaded healthy account
+
+### Capacity Profile
+
+Fields:
+
+- `id`
+- `name`
+- `status`
+- `accountClass`
+- `maxActiveSessions`
+- `rollingWindowBudgetHint`
+- `weeklyBudgetHint`
+- `peakHourMultiplier`
+- `retryBackoffPolicy`
+- `drainThreshold`
+- `notes`
+
+Notes:
+
+- this is where account-class-aware scheduler behavior should live without hard-coding one commercial assumption into the gateway runtime
+- different Claude accounts may share one capacity profile while still keeping different fingerprints and different proxies
 
 ## Recommended Repository Structure
 
@@ -362,6 +395,10 @@ Work:
 - backoff and cooldown
 - failure classification
 - automatic unhealthy marking
+- rate-limit-header ingestion
+- queue-based overflow handling
+- session affinity and cache-aware routing
+- peak-hour and capacity-profile-aware scheduling
 
 ## Feature Notes
 
@@ -385,10 +422,18 @@ This is more than storing multiple refresh tokens.
 The system should eventually support:
 
 - one fingerprint per account by default
+- one sticky proxy binding or sticky proxy set per account by default
 - account labels and grouping
 - account health status
+- global Busy/Idle ownership per account
+- budget-aware scheduling based on rate-limit utilization
+- rolling-window and weekly-budget state
+- peak-hour throttling rules
+- session affinity for cache preservation
+- queueing instead of unsafe fan-out when all safe accounts are busy
 - concurrent usage limits
 - cooldown after repeated failures
+- drain and circuit-breaker states before quota cliffs
 - manual disable and quarantine
 
 ### Proxy Pool Management
@@ -402,6 +447,8 @@ Capabilities we should plan for:
 - provider tagging
 - latency and health tracking
 - default proxy per account
+- sticky dedicated proxy assignment per account
+- narrow sticky proxy set per account for controlled failover
 - policy-based proxy selection
 
 ### Fingerprint Profiles
@@ -411,6 +458,7 @@ A fingerprint should become a named reusable object, not just a block in one con
 Important rule:
 
 - keep profiles internally consistent
+- keep profiles stable per account, not per end user
 
 Example:
 

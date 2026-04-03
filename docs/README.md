@@ -22,6 +22,12 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [architecture-priority-map.md](./architecture-priority-map.md)
   Architecture-level progress review and the frozen priority order for the next stage.
 
+- [account-fingerprint-strategy.md](./account-fingerprint-strategy.md)
+  Account-centric fingerprint rules and why account pool work depends on the fingerprint asset layer.
+
+- [account-pool-scheduler-strategy.md](./account-pool-scheduler-strategy.md)
+  Account-centric scheduler rules for stable per-account fingerprints, sticky proxies, budget-aware routing, queueing, and session affinity.
+
 - [data-model.md](./data-model.md)
   Core entities for accounts, fingerprints, proxies, clients, policies, sessions, and audit records.
 

@@ -28,10 +28,11 @@ That means the repository has crossed the hardest part of the first stage:
 
 But it has not crossed the second stage yet:
 
-- hot-updateable fingerprint assets
+- fully versioned and hot-updateable fingerprint assets
 - one-click maintenance automation
 - modular runtime boundaries
 - persistent control-plane data
+- account-centric scheduler substrate
 
 ## Current Progress By Layer
 
@@ -65,6 +66,7 @@ What is already true:
 - local npm is now explicitly frozen as the canonical research baseline
 - a report generator exists for current telemetry evidence
 - a first outer maintenance entrypoint now exists
+- the first file-backed fingerprint asset layer has started
 
 What is still missing:
 
@@ -198,6 +200,7 @@ Start conditions for serious implementation:
 
 - maintenance loop is stable
 - fingerprint asset layer exists
+- account-centric scheduler substrate exists
 - runtime module boundaries are cleaner
 - control-plane substrate exists
 
@@ -242,7 +245,7 @@ Why this is first:
 - upstream changes are the main source of future breakage
 - if maintenance is slow, every later platform layer will drift
 
-### P1. Extract the Fingerprint Asset Layer
+### P1. Extract and Harden the Fingerprint Asset Layer
 
 This is the next architecture step after the maintenance loop.
 
@@ -260,15 +263,51 @@ Target shape:
   - process profile
   - optional endpoint-specific overrides
 - support for hot updates without restructuring deployment secrets
+- file-backed loading by stable asset ID
 
 Why this matters:
 
 - it is the foundation for “hot-updateable fingerprint library”
 - it is also the bridge between research outputs and future account/fingerprint management
+- it is the prerequisite for doing account pool and proxy pool work correctly
 
 This is the highest-value architecture task after P0.
 
-### P2. Introduce Runtime Module Boundaries
+Current status:
+
+- the first file-backed split now exists:
+  - account identity remains account-scoped
+  - `client / env / prompt_env / process` can be loaded from `profiles/fingerprints/*.yaml`
+  - runtime references can already use asset IDs instead of raw file paths
+- P1 is no longer a blank idea
+- P1 is now in the “expand and harden” phase
+
+Reference:
+
+- [account-fingerprint-strategy.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/account-fingerprint-strategy.md)
+
+### P2. Introduce the Account-Centric Scheduler Substrate
+
+Goal:
+
+- make `ClaudeAccount` the scheduling subject
+- preserve stable per-account fingerprint and proxy narratives
+- prepare for queueing, drain, cooldown, and budget-aware routing
+
+Focus:
+
+- account Busy/Idle/Drain state
+- capacity profiles separated from fingerprint assets
+- sticky proxy binding per account
+- session-affinity-aware dispatch
+- rate-limit-header-driven budget state
+
+Why this comes before frontend work:
+
+- the admin UI must expose the real scheduling model, not invent one
+- account pool and proxy pool are meaningless until the scheduler substrate is explicit
+
+### P3. Introduce Runtime Module Boundaries
 
 Goal:
 
@@ -285,7 +324,7 @@ Why now:
 
 - once fingerprint assets become explicit, the runtime needs cleaner module boundaries
 
-### P3. Build the Minimal Control-Plane Substrate
+### P4. Build the Minimal Control-Plane Substrate
 
 Goal:
 
@@ -304,7 +343,7 @@ Why not earlier:
 
 This is the stage where account-pool and proxy-pool implementation should actually begin.
 
-### P4. Start Control Plane APIs
+### P5. Start Control Plane APIs
 
 Goal:
 
@@ -315,7 +354,7 @@ Focus:
 - CRUD only where the underlying domain model is already stable
 - do not mix admin auth with gateway client auth
 
-### P5. Build Admin Web
+### P6. Build Admin Web
 
 Goal:
 
@@ -349,8 +388,9 @@ If we continue from today, the clean order is:
 1. keep local npm as the canonical research baseline
 2. make maintenance/report generation one-click
 3. extract a hot-updateable fingerprint asset layer
-4. refactor runtime boundaries around that asset layer
-5. only then start the persistent control-plane substrate
+4. introduce the account-centric scheduler substrate
+5. refactor runtime boundaries around that asset layer
+6. only then start the persistent control-plane substrate
 
 ## Practical Readiness Summary
 
@@ -359,7 +399,8 @@ From a whole-project perspective:
 - transport/telemetry foundation: `near-complete`
 - deployment/ops baseline: `good enough`
 - maintenance automation: `started but not finished`
-- fingerprint asset architecture: `next`
+- fingerprint asset architecture: `in progress`
+- account-centric scheduler substrate: `next`
 - Claude Code source understanding for relevant surfaces: `good enough to keep advancing`
 - local project source understanding for current runtime: `good enough to refactor safely`
 - product maturity: `gateway beta / platform alpha`
@@ -373,4 +414,7 @@ The next priority is:
 
 > turn the current research framework into a maintainable operating system for keeping the gateway aligned with upstream changes.
 
-Once that is done, the fingerprint asset layer becomes the next structural milestone.
+Once that loop is stable, the next structural milestones are:
+
+1. harden the fingerprint asset layer
+2. introduce the account-centric scheduler substrate

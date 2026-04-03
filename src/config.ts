@@ -21,6 +21,7 @@ export type Config = {
   network?: {
     proxy_url?: string
   }
+  fingerprint_profile?: string
   auth: {
     tokens: TokenEntry[]
   }
@@ -62,6 +63,20 @@ export type Config = {
     file?: string
     audit_file?: string
   }
+}
+
+type FingerprintProfile = {
+  client?: Config['client']
+  env?: Config['env']
+  prompt_env?: Config['prompt_env']
+  process?: Config['process']
+}
+
+type RawConfig = Omit<Config, 'client' | 'env' | 'prompt_env' | 'process'> & {
+  client?: Config['client']
+  env?: Config['env']
+  prompt_env?: Config['prompt_env']
+  process?: Config['process']
 }
 
 const ENV_PLACEHOLDER_RE = /\$\{([A-Z0-9_]+)(?::-(.*?))?\}/g
@@ -162,14 +177,67 @@ function normalizeOptionalStrings(config: Config): void {
   }
 }
 
+function loadYamlWithEnv<T>(path: string): T {
+  const raw = readFileSync(path, 'utf-8')
+  return parse(interpolateEnv(raw)) as T
+}
+
+function resolveFingerprintProfilePath(configPath: string, profileRef: string): string {
+  const configDir = dirname(configPath)
+  const directHint = profileRef.includes('/') || profileRef.includes('\\') || profileRef.endsWith('.yaml') || profileRef.endsWith('.yml')
+  const candidates = directHint
+    ? [resolve(configDir, profileRef)]
+    : [
+        resolve(configDir, 'profiles', 'fingerprints', `${profileRef}.yaml`),
+        resolve(configDir, 'profiles', 'fingerprints', `${profileRef}.yml`),
+        resolve(configDir, profileRef),
+      ]
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate
+  }
+
+  throw new Error(`config: fingerprint_profile not found for ${profileRef}`)
+}
+
+function loadFingerprintProfile(configPath: string, profileRef?: string): FingerprintProfile | undefined {
+  if (!profileRef) return undefined
+
+  const profilePath = resolveFingerprintProfilePath(configPath, profileRef)
+  return loadYamlWithEnv<FingerprintProfile>(profilePath)
+}
+
+function mergeFingerprintProfile(rawConfig: RawConfig, profile?: FingerprintProfile): Config {
+  return {
+    ...rawConfig,
+    client: {
+      ...(profile?.client ?? {}),
+      ...(rawConfig.client ?? {}),
+    },
+    env: {
+      ...(profile?.env ?? {}),
+      ...(rawConfig.env ?? {}),
+    },
+    prompt_env: {
+      ...(profile?.prompt_env ?? {}),
+      ...(rawConfig.prompt_env ?? {}),
+    },
+    process: {
+      ...(profile?.process ?? {}),
+      ...(rawConfig.process ?? {}),
+    },
+  } as Config
+}
+
 export function loadConfig(configPath?: string): Config {
   const filePath = configPath || resolve(process.cwd(), 'config.yaml')
   const envPath = resolve(dirname(filePath), '.env')
 
   loadDotEnv(envPath)
 
-  const raw = readFileSync(filePath, 'utf-8')
-  const config = parse(interpolateEnv(raw)) as Config
+  const rawConfig = loadYamlWithEnv<RawConfig>(filePath)
+  const fingerprintProfile = loadFingerprintProfile(filePath, rawConfig.fingerprint_profile)
+  const config = mergeFingerprintProfile(rawConfig, fingerprintProfile)
   normalizeOptionalStrings(config)
 
   if (!config.identity?.device_id || config.identity.device_id.includes('0000000000')) {
@@ -180,6 +248,15 @@ export function loadConfig(configPath?: string): Config {
   }
   if (!config.oauth?.refresh_token) {
     throw new Error('config: oauth.refresh_token is required. Do a browser OAuth login on the admin machine, then copy the refresh token from ~/.claude/.credentials.json')
+  }
+  if (!config.env || Object.keys(config.env).length === 0) {
+    throw new Error('config: env must be supplied inline or via fingerprint_profile')
+  }
+  if (!config.prompt_env?.platform || !config.prompt_env?.shell || !config.prompt_env?.os_version || !config.prompt_env?.working_dir) {
+    throw new Error('config: prompt_env must be supplied inline or via fingerprint_profile')
+  }
+  if (!config.process?.constrained_memory || !config.process?.rss_range || !config.process?.heap_total_range || !config.process?.heap_used_range) {
+    throw new Error('config: process must be supplied inline or via fingerprint_profile')
   }
 
   return config

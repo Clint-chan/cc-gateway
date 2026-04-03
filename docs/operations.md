@@ -54,6 +54,7 @@ The runtime now uses a two-layer config model:
 
 - `.env`: deployment-specific values and secrets
 - `config.yaml`: structured gateway persona and rewrite policy
+- `profiles/fingerprints/*.yaml`: reusable fingerprint behavior assets
 
 Put these in `.env`:
 
@@ -68,11 +69,20 @@ Put these in `.env`:
 
 Keep these in `config.yaml`:
 
+- fingerprint profile reference
+- rewrite policy defaults
+
+`fingerprint_profile` can now be either:
+
+- an asset ID such as `example-darwin-arm64`
+- or a relative YAML path for temporary experiments
+
+Keep these in `profiles/fingerprints/*.yaml`:
+
+- client persona structure
 - canonical `env`
 - `prompt_env`
 - `process`
-- client persona structure
-- rewrite policy defaults
 
 This keeps one `.env` reusable across:
 
@@ -100,6 +110,7 @@ Review these values as well and adjust if needed:
 - `GATEWAY_AUDIT_LOG_FILE`
 
 Then review [config.yaml](/C:/Users/94503/Documents/GitHub/cc-gateway/config.yaml) only if you want to change the canonical fingerprint persona.
+Most fingerprint changes should now happen in the referenced profile file instead.
 
 ## Local Docker Deployment
 

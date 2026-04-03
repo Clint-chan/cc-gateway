@@ -31,9 +31,11 @@ The first useful version of the platform should include these entities:
 4. `ProxyNode`
 5. `ClientMachine`
 6. `RoutingPolicy`
-7. `GatewaySession`
-8. `AuditLog`
-9. `HealthEvent`
+7. `CapacityProfile`
+8. `DispatchJob`
+9. `GatewaySession`
+10. `AuditLog`
+11. `HealthEvent`
 
 ## Common Fields
 
@@ -99,13 +101,23 @@ Represents one Claude account whose OAuth credentials can be used by the gateway
 - `fingerprintProfileId`
 - `defaultProxyId`
 - `defaultPolicyId`
+- `capacityProfileId`
 - `regionHint`
 - `tags`
 - `notes`
 - `lastRefreshAt`
 - `lastRefreshError`
 - `quotaState`
+- `busyState`
+- `drainState`
+- `rollingWindowUtilization`
+- `rollingWindowResetsAt`
+- `weeklyBudgetState`
+- `weeklyBudgetResetsAt`
+- `lastRetryAfterSeconds`
+- `cooldownUntil`
 - `concurrencyLimit`
+- `maxActiveSessions`
 - `priorityWeight`
 
 ### Status
@@ -124,12 +136,25 @@ Represents one Claude account whose OAuth credentials can be used by the gateway
 - `EXHAUSTED`
 - `UNKNOWN`
 
+### Busy State
+
+- `IDLE`
+- `BUSY`
+
+### Drain State
+
+- `ACCEPTING`
+- `DRAINING`
+- `DRAINED`
+
 ### Notes
 
 - `deviceId` should be stable for that account unless intentionally rotated.
 - `fingerprintProfileId` defines the default profile used when rewriting requests for this account.
 - `defaultProxyId` is optional because policy-based routing may override it.
 - `refreshTokenEncrypted` is mandatory for accounts used in automatic refresh flows.
+- one shared account should still present one stable outward fingerprint and proxy story to the upstream.
+- `capacityProfileId` lets the scheduler separate account-class behavior from fingerprint behavior.
 
 ## FingerprintProfile
 
@@ -240,6 +265,7 @@ Represents one outbound proxy endpoint available to the gateway.
 - `protocol` defines how the gateway reaches the proxy.
 - `networkType` is an operator-facing classification used in routing policy.
 - Credentials should be encrypted at rest.
+- later versions should support exclusive or sticky assignment between accounts and proxies.
 
 ## ClientMachine
 
@@ -297,6 +323,10 @@ Represents a declarative routing rule for deciding which account and proxy shoul
 - `fallbackStrategy`
 - `concurrencyLimit`
 - `cooldownSeconds`
+- `sessionAffinityMode`
+- `queueStrategy`
+- `budgetGuardrail`
+- `peakHourStrategy`
 - `notes`
 
 ### Status
@@ -316,6 +346,7 @@ Represents a declarative routing rule for deciding which account and proxy shoul
 - `FIXED`
 - `ROUND_ROBIN`
 - `LEAST_LOADED`
+- `BUDGET_AWARE`
 - `WEIGHTED_RANDOM`
 - `FAILOVER`
 
@@ -325,6 +356,7 @@ Represents a declarative routing rule for deciding which account and proxy shoul
 - `FIXED`
 - `ROUND_ROBIN`
 - `LEAST_LATENCY`
+- `STICKY_ACCOUNT`
 - `WEIGHTED_RANDOM`
 - `FAILOVER`
 
@@ -339,6 +371,73 @@ Represents a declarative routing rule for deciding which account and proxy shoul
 
 - `accountPool` and `proxyPool` can start as arrays of IDs and evolve later into richer rule objects.
 - `priority` should determine evaluation order when multiple active policies match.
+- `sessionAffinityMode` is required once multi-turn conversations must stay on the same account.
+- `budgetGuardrail` and `peakHourStrategy` are where scheduler policy can react to rate-limit headers and time-of-day pressure.
+
+## CapacityProfile
+
+Represents scheduler behavior that belongs to an account class, not to one specific account or one fingerprint asset.
+
+### Fields
+
+- `id`
+- `name`
+- `status`
+- `accountClass`
+- `maxActiveSessions`
+- `rollingWindowBudgetHint`
+- `weeklyBudgetHint`
+- `peakHourMultiplier`
+- `retryBackoffPolicy`
+- `drainThreshold`
+- `queuePriority`
+- `notes`
+
+### Status
+
+- `ACTIVE`
+- `DISABLED`
+- `ARCHIVED`
+
+### Notes
+
+- Use this entity to encode capacity behavior such as peak-hour down-weighting or conservative drain thresholds.
+- Do not store account-specific secrets or fingerprint data here.
+
+## DispatchJob
+
+Represents queued work waiting for a safe account/proxy assignment.
+
+### Fields
+
+- `id`
+- `status`
+- `routingPolicyId`
+- `clientMachineId`
+- `sessionAffinityKey`
+- `requestPath`
+- `priority`
+- `queuedAt`
+- `startedAt`
+- `finishedAt`
+- `attemptCount`
+- `nextAttemptAt`
+- `lastErrorCode`
+- `lastErrorMessage`
+
+### Status
+
+- `QUEUED`
+- `RUNNING`
+- `RETRY_WAIT`
+- `COMPLETED`
+- `FAILED`
+- `CANCELLED`
+
+### Notes
+
+- This entity becomes important once the scheduler prefers queueing over unsafe overload.
+- `sessionAffinityKey` lets retries preserve cache-aware routing when possible.
 
 ## GatewaySession
 
@@ -352,11 +451,15 @@ Represents a runtime association between a client request stream and the resourc
 - `claudeAccountId`
 - `fingerprintProfileId`
 - `proxyNodeId`
+- `dispatchJobId`
+- `sessionAffinityKey`
 - `requestPath`
 - `startedAt`
 - `endedAt`
 - `status`
 - `requestCount`
+- `queueWaitMs`
+- `retryCount`
 - `errorCode`
 - `errorMessage`
 
@@ -371,6 +474,7 @@ Represents a runtime association between a client request stream and the resourc
 
 - This entity is useful for debugging which account and proxy were used by a request stream.
 - It is especially important once dynamic routing is introduced.
+- `sessionAffinityKey` should explain why follow-up turns stayed on the same account.
 
 ## AuditLog
 
@@ -413,6 +517,8 @@ Represents a point-in-time health result for an account or proxy.
 - `status`
 - `reason`
 - `detailsJson`
+- `utilizationSnapshot`
+- `retryAfterSeconds`
 - `latencyMs`
 - `createdAt`
 
@@ -434,9 +540,11 @@ The main relationships are:
 
 - one `ClaudeAccount` references one default `FingerprintProfile`
 - one `ClaudeAccount` may reference one default `ProxyNode`
+- one `ClaudeAccount` may reference one `CapacityProfile`
 - one `ClientMachine` may reference one default `RoutingPolicy`
 - one `RoutingPolicy` may reference many `ClaudeAccount` records
 - one `RoutingPolicy` may reference many `ProxyNode` records
+- one `DispatchJob` may be assigned to one `GatewaySession`
 - one `GatewaySession` references one client, one policy, one account, one fingerprint profile, and optionally one proxy
 
 ## Secret Storage Rules
@@ -465,9 +573,11 @@ Recommended initial tables:
 - `fingerprint_profiles`
 - `proxy_nodes`
 - `client_machines`
+- `capacity_profiles`
 - `routing_policies`
 - `routing_policy_accounts`
 - `routing_policy_proxies`
+- `dispatch_jobs`
 - `gateway_sessions`
 - `audit_logs`
 - `health_events`
@@ -485,13 +595,17 @@ The first backend version should validate at least the following:
 - `ProxyNode.endpointHost` and `endpointPort` must both exist for active proxies
 - `ClientMachine.tokenHash` must exist for active clients
 - `RoutingPolicy.priority` must be unique or deterministically sortable
+- `ClaudeAccount.maxActiveSessions` must be greater than zero for routable accounts
+- `ClaudeAccount.defaultProxyId` should resolve to an active proxy when strict proxy isolation is enabled
+- `CapacityProfile.rollingWindowBudgetHint` must be positive when budget-aware scheduling is enabled
 
 ## Migration Mapping From Current YAML
 
 The current `config.yaml` can be mapped into the future model like this:
 
 - `oauth.refresh_token` -> one `ClaudeAccount.refreshTokenEncrypted`
-- `identity.device_id` + `identity.email` + `env` + `prompt_env` + `process` -> one `FingerprintProfile` plus account identity fields
+- `identity.device_id` + `identity.email` -> account identity fields
+- `fingerprint_profile` or inline `client/env/prompt_env/process` -> one `FingerprintProfile`
 - `auth.tokens[]` -> multiple `ClientMachine` records
 - global upstream config -> runtime or system config table later
 

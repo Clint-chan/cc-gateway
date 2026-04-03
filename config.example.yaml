@@ -23,14 +23,10 @@ oauth:
   refresh_token: "${GATEWAY_OAUTH_REFRESH_TOKEN}"
   expires_at: ${GATEWAY_OAUTH_EXPIRES_AT:-null}
 
-# Canonical client persona.
-client:
-  user_agent: "claude-cli/2.1.91 (external, sdk-cli)"
-  entrypoint: sdk-cli
-  client_type: sdk-cli
-  required_betas:
-    - oauth-2025-04-20
-    - advanced-tool-use-2025-11-20
+# Fingerprint assets live under ./profiles/.
+# Account identity stays here; reusable fingerprint behavior moves into the profile.
+# You can reference either an asset ID or a relative YAML path.
+fingerprint_profile: "example-darwin-arm64"
 
 auth:
   tokens:
@@ -40,50 +36,6 @@ auth:
 identity:
   device_id: "${GATEWAY_IDENTITY_DEVICE_ID}"
   email: "${GATEWAY_IDENTITY_EMAIL}"
-
-# Canonical environment fingerprint.
-# Keep the structured persona here instead of flattening it into .env.
-env:
-  platform: darwin
-  platform_raw: darwin
-  arch: arm64
-  node_version: v24.3.0
-  terminal: iTerm2.app
-  package_managers: npm,pnpm
-  runtimes: node
-  is_running_with_bun: false
-  is_ci: false
-  is_claude_ai_auth: true
-  version: "2.1.81"
-  version_base: "2.1.81"
-  build_time: "2026-03-20T21:26:18Z"
-  deployment_environment: unknown-darwin
-  vcs: git
-  # Optional telemetry alignment fields from first-party event metadata:
-  # remote_environment_type: ssh
-  # coworker_type: teammate
-  # claude_code_container_id: container-abc
-  # claude_code_remote_session_id: remote-session-xyz
-  # tags: [team-a, canary]
-  # wsl_version: WSL2
-  # linux_distro_id: ubuntu
-  # linux_distro_version: "24.04"
-  # linux_kernel: 6.8.0-57-generic
-
-prompt_env:
-  platform: darwin
-  shell: zsh
-  os_version: "Darwin 24.4.0"
-  working_dir: /Users/jack/projects
-
-process:
-  constrained_memory: 34359738368
-  rss_range: [300000000, 500000000]
-  heap_total_range: [40000000, 80000000]
-  heap_used_range: [100000000, 200000000]
-  external_range: [3000000, 12000000]
-  array_buffers_range: [200000, 2000000]
-  cpu_percent_range: [0, 35]
 
 logging:
   level: ${GATEWAY_LOG_LEVEL:-info}

@@ -127,6 +127,7 @@
 - 数据模型草案
 - API 设计草案
 - 仓库结构演进规则
+- 指纹资产层已经开始 file-backed 拆分
 
 未完成：
 
@@ -160,9 +161,10 @@
 当前架构优先级顺序已经冻结在：
 
 1. 维护环路自动化
-2. 指纹资产层抽离
-3. runtime 模块边界整理
-4. 再进入 control-plane substrate
+2. 指纹资产层继续抽离并硬化
+3. 账号中心化 scheduler substrate
+4. runtime 模块边界整理
+5. 再进入 control-plane substrate
 
 参考：[architecture-priority-map.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/architecture-priority-map.md)
 

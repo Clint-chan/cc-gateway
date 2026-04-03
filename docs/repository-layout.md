@@ -67,6 +67,8 @@
   - `config.example.yaml`
   - `.claude.json.example`
   - `.claude.alignment.json.example`
+- 结构化资产目录
+  - `profiles/`
 - 少量必须直放根目录的操作文件
   - `README.md`
   - `LICENSE`
@@ -173,6 +175,20 @@ tests/
 - 调查过程写进专项文档
 - 结果摘要写进 [packet-alignment-log.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/packet-alignment-log.md)
 - 全局索引写进 [fingerprint-catalog.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/fingerprint-catalog.md) 或 [transport-surface-map.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/transport-surface-map.md)
+
+### `profiles/`
+
+这是结构化配置资产目录，不是运行日志目录。
+
+当前方向：
+
+- `profiles/fingerprints/` 存放可复用指纹 profile
+
+规则：
+
+- 账号身份不放进指纹 profile
+- OAuth secrets 不放进指纹 profile
+- profile 文件应可版本化、可审阅、可热更新
 
 ## 运行日志与生成产物
 

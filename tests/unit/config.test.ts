@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { strict as assert } from 'assert'
@@ -57,6 +57,29 @@ logging:
   audit: true
   file: "./runtime/logs/gateway.log"
   audit_file: "./runtime/logs/audit.log"
+`
+
+const profileBackedConfig = `
+server:
+  port: \${TEST_GATEWAY_PORT}
+  tls:
+    cert: "./certs/cert.pem"
+    key: "./certs/key.pem"
+upstream:
+  url: "\${TEST_UPSTREAM_URL:-https://api.anthropic.com}"
+fingerprint_profile: "test-profile"
+auth:
+  tokens:
+    - name: "\${TEST_CLIENT_NAME}"
+      token: "\${TEST_CLIENT_TOKEN}"
+oauth:
+  refresh_token: "\${TEST_REFRESH_TOKEN}"
+identity:
+  device_id: "\${TEST_DEVICE_ID}"
+  email: "\${TEST_EMAIL}"
+logging:
+  level: info
+  audit: true
 `
 
 function withTempConfig(envBody: string, run: (configPath: string) => void): void {
@@ -148,6 +171,77 @@ TEST_EMAIL=tester@example.com
       /config: missing env var TEST_REFRESH_TOKEN/,
     )
   })
+})
+
+test('loads client/env/prompt_env/process from fingerprint_profile', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'cc-gateway-profile-'))
+  const configPath = join(dir, 'config.yaml')
+  const envPath = join(dir, '.env')
+  const profileDir = join(dir, 'profiles', 'fingerprints')
+  const profilePath = join(profileDir, 'test-profile.yaml')
+
+  mkdirSync(profileDir, { recursive: true })
+  writeFileSync(configPath, profileBackedConfig)
+  writeFileSync(
+    profilePath,
+    `
+client:
+  user_agent: "claude-cli/2.1.91 (external, sdk-cli)"
+  entrypoint: sdk-cli
+env:
+  platform: darwin
+  terminal: "Terminal.app"
+prompt_env:
+  platform: darwin
+  shell: zsh
+  os_version: Darwin 24.4.0
+  working_dir: /Users/test/projects
+process:
+  constrained_memory: 34359738368
+  rss_range: [300000000, 500000000]
+  heap_total_range: [40000000, 80000000]
+  heap_used_range: [100000000, 200000000]
+`,
+  )
+  writeFileSync(
+    envPath,
+    `
+TEST_GATEWAY_PORT=8443
+TEST_CLIENT_NAME=profile-client
+TEST_CLIENT_TOKEN=profile-token
+TEST_REFRESH_TOKEN=test-refresh-token
+TEST_DEVICE_ID=dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+TEST_EMAIL=profile@example.com
+`,
+  )
+
+  const snapshot = new Map<string, string | undefined>()
+  for (const key of [
+    'TEST_GATEWAY_PORT',
+    'TEST_CLIENT_NAME',
+    'TEST_CLIENT_TOKEN',
+    'TEST_REFRESH_TOKEN',
+    'TEST_DEVICE_ID',
+    'TEST_EMAIL',
+  ]) {
+    snapshot.set(key, process.env[key])
+    delete process.env[key]
+  }
+
+  try {
+    const config = loadConfig(configPath)
+    assert.equal(config.identity.email, 'profile@example.com')
+    assert.equal(config.client?.user_agent, 'claude-cli/2.1.91 (external, sdk-cli)')
+    assert.equal(config.env.terminal, 'Terminal.app')
+    assert.equal(config.prompt_env.shell, 'zsh')
+    assert.equal(config.process.constrained_memory, 34359738368)
+  } finally {
+    for (const [key, value] of snapshot) {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
+    rmSync(dir, { recursive: true, force: true })
+  }
 })
 
 console.log(`\n${passed} passed, ${failed} failed\n`)

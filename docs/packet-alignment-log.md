@@ -849,6 +849,41 @@
   - 当前报告生成器仍然依赖现有 capture 命名约定
   - 后续如果要接入定时任务，还需要补“新 capture -> 固定命名 -> 自动报告”的外层调度脚本
 
+### A-026 指纹资产层已经开始从静态 config 块中抽离
+
+- 日期：2026-04-04
+- 证据：
+  - [profiles/fingerprints/example-darwin-arm64.yaml](/C:/Users/94503/Documents/GitHub/cc-gateway/profiles/fingerprints/example-darwin-arm64.yaml)
+  - [profiles/README.md](/C:/Users/94503/Documents/GitHub/cc-gateway/profiles/README.md)
+  - [account-fingerprint-strategy.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/account-fingerprint-strategy.md)
+  - [config.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/src/config.ts)
+  - [config.test.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/tests/unit/config.test.ts)
+- 当前差异：
+  - 之前 `client / env / prompt_env / process` 全都内嵌在单个 `config.yaml`
+  - 这不利于：
+    - 每账号绑定独立指纹
+    - profile 版本化
+    - 后续热更新与同步
+    - 把 account identity 和 fingerprint behavior 分离
+- 处理动作：
+  - 新增 `profiles/fingerprints/` 作为 file-backed fingerprint asset 目录
+  - 保持账号身份继续留在运行时配置：
+    - `email`
+    - `device_id`
+    - OAuth 凭证
+  - 允许 runtime 通过 `fingerprint_profile` 加载 profile
+  - 支持两种引用方式：
+    - asset ID
+    - 相对 YAML 路径
+- 回归验证：
+  - `npm run build`
+  - `npm test`
+  - 用 `config.example.yaml` + `.env` 作为 profile-backed 配置启动，`/_health` 返回 `ok`
+- 剩余风险：
+  - 现在还是 file-backed asset，不是热更新库
+  - 还没有 profile manifest、版本同步、校验与发布流程
+  - 账号池 / 代理池 仍未进入实现阶段，但现在已经有了正确的底层切分
+
 ## 下一步优先级
 
 1. 把维护报告生成器接到更完整的 capture 调度流
