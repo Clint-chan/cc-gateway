@@ -138,6 +138,19 @@
 5. custom base URL 会让一部分 only-first-party 控制面路径直接失去资格，自动 diff 时必须区分“未发送”和“发送后不一致”
 6. 一部分 side channel 默认并不跟 `ANTHROPIC_BASE_URL` 走，自动化采集必须结合 [transport-surface-map.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/transport-surface-map.md) 判断采集入口
 7. 当前 headless 最小请求已确认会发 `event_logging`，但还没有稳定触发 `/api/eval/*`
+8. local-jsx blocking gate 命令还受 workspace trust 影响，当前 cwd 如果没 trust，不能把“没抓到 `/api/eval/*`”直接当成路径缺失
+
+## 当前推荐的采集前检查
+
+在继续追 `/api/eval/*` 之前，先运行：
+
+- [inspect-growthbook-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-growthbook-state.ps1)
+
+先确认三件事：
+
+1. 当前 cwd trust 是否成立
+2. 是否已经存在较大的 `cachedGrowthBookFeatures`
+3. 当前关键 gate 的磁盘缓存值是什么
 
 ## 结论
 

@@ -87,6 +87,10 @@
   默认 `apiHost` 是 `https://api.anthropic.com/`
 - 备注：
   这意味着就算主推理流量走 gateway，GrowthBook 也未必会走同一路
+  另外还要区分两个前置条件：
+  - headless `-p` 路径只会 fire-and-forget 初始化 GrowthBook，进程可能先退出
+  - local-jsx / interactive 命令如果当前 cwd 没 trust，GrowthBook 可能连 auth headers 都拿不到
+  详见 [growthbook-eval-investigation.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/growthbook-eval-investigation.md)
 
 #### 2.2 1P event logging
 

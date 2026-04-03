@@ -195,8 +195,14 @@
   - `accountUUID`
   - `subscriptionType`
   - `rateLimitTier`
+- 当前调查状态：
+  - headless `-p` 路径在 [print.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/cli/print.ts) 中只会 `void initializeGrowthBook()`
+  - local-jsx blocking gate 命令如果当前 cwd 没 trust，GrowthBook 也可能拿不到 auth headers
+  - 详见 [growthbook-eval-investigation.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/growthbook-eval-investigation.md)
 - 模式注意：
   `quiet mode` 下这一路本来就不会发，只有 `alignment mode` 才适合验证
+- 快速检查：
+  - [inspect-growthbook-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-growthbook-state.ps1)
 - 后续更新方式：
   需要专门复抓一轮带 eval 的请求，核对 gateway 实际出站体
 

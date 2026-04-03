@@ -405,6 +405,40 @@
   - `/api/eval/*` 仍是当前未完全验掉的面
   - 不能因为 `/api/eval/*` 没抓到，就默认这一路已经安全
 
+### A-017 `/api/eval/*` 缺失的前置条件已拆清
+
+- 日期：2026-04-03
+- 证据：
+  - [growthbook.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/services/analytics/growthbook.ts)
+  - [print.ts](/C:/Users/94503/Documents/GitHub/cc-gateway/reference/claudecode_source/src/cli/print.ts)
+  - [C:\\Users\\94503\\.claude.json](/C:/Users/94503/.claude.json)
+  - [growthbook-eval-investigation.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/growthbook-eval-investigation.md)
+- 当前差异：
+  - 之前只知道“当前 headless 最小抓包里没看到 `/api/eval/*`”，但不知道究竟是：
+    - 进程先退了
+    - trust 没建立
+    - 还是路径真的不发了
+  - 现在已经拆清两层前置条件：
+    - headless `-p` 里 GrowthBook 只做 `void initializeGrowthBook()`，不保证在进程退出前完成 remote eval
+    - local-jsx / interactive 命令如果当前 cwd 没 trust，就可能直接拿不到 GrowthBook auth headers
+- 处理动作：
+  - 新增 [growthbook-eval-investigation.md](/C:/Users/94503/Documents/GitHub/cc-gateway/docs/growthbook-eval-investigation.md)，把 `/api/eval/*` 的触发条件、缓存影响和验证顺序单独固化
+  - 新增 [inspect-growthbook-state.ps1](/C:/Users/94503/Documents/GitHub/cc-gateway/scripts/inspect-growthbook-state.ps1)，用于快速检查：
+    - cwd trust
+    - `cachedGrowthBookFeatures`
+    - 关键 gate 当前缓存值
+  - 记录当前本机状态：
+    - `~/.claude.json` 已有大量 GrowthBook 磁盘缓存
+    - 当前记录到的 home project trust 为 `false`
+- 回归验证：
+  - `claude remote-control` 当前会返回 `Remote Control is not yet enabled for your account.`
+  - 同时 direct MITM 抓包中没有出现任何 `/api/eval/*`，与“当前 cwd 无 trust、GrowthBook auth 可能被短路”的源码逻辑一致
+- 剩余风险：
+  - 这仍然不是 `/api/eval/*` 已消失的证据
+  - 下一轮如果要继续实抓，必须优先选择：
+    - trusted 的长生命周期会话
+    - 或者一个 non-interactive 且明确阻塞 GrowthBook 的入口
+
 ## 下一步优先级
 
 1. 专项触发 `/api/eval/*`，验证它到底是 headless 退出问题还是场景问题

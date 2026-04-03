@@ -39,6 +39,9 @@ The goal is to keep product direction, data model, API shape, and operational st
 - [fingerprint-catalog.md](./fingerprint-catalog.md)
   Central catalog of fingerprint surfaces, evidence paths, code ownership, and update workflow.
 
+- [growthbook-eval-investigation.md](./growthbook-eval-investigation.md)
+  Dedicated investigation log for `/api/eval/*`, trust gating, disk cache behavior, and the current capture strategy.
+
 - [telemetry-automation-plan.md](./telemetry-automation-plan.md)
   Semi-automation roadmap for recurring capture, parsing, diffing, and manual review.
 
