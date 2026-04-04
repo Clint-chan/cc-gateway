@@ -5,7 +5,7 @@ import { request as httpsRequest } from 'https'
 import { URL } from 'url'
 import type { Config } from './config.js'
 import { authenticate, initAuth } from './auth.js'
-import { getAccessToken } from './oauth.js'
+import { getAccessToken, getOAuthRuntimeState } from './oauth.js'
 import { rewriteBodyWithHeaders, rewriteHeaders } from './rewriter.js'
 import { audit, log } from './logger.js'
 import { getProxyAgent } from './net.js'
@@ -59,12 +59,13 @@ async function handleRequest(
 
   // Health check - no auth required
   if (path === '/_health') {
-    const oauthOk = !!getAccessToken()
+    const oauth = getOAuthRuntimeState()
+    const oauthOk = oauth.status === 'valid' && oauth.has_access_token
     const status = oauthOk ? 200 : 503
     res.writeHead(status, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({
       status: oauthOk ? 'ok' : 'degraded',
-      oauth: oauthOk ? 'valid' : 'expired/refreshing',
+      oauth,
       canonical_device: config.identity.device_id.slice(0, 8) + '...',
       canonical_platform: config.env.platform,
       upstream: config.upstream.url,
@@ -100,9 +101,17 @@ async function handleRequest(
   // Get the real OAuth token (managed by gateway)
   const oauthToken = getAccessToken()
   if (!oauthToken) {
+    const oauth = getOAuthRuntimeState()
     res.writeHead(503, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ error: 'OAuth token not available - gateway is refreshing' }))
-    log('error', 'No valid OAuth token available')
+    res.end(JSON.stringify({
+      error: 'OAuth token not available',
+      oauth,
+    }))
+    log('error', 'No valid OAuth token available', {
+      oauth_status: oauth.status,
+      failure_hint: oauth.failure_hint,
+      next_retry_at: oauth.next_retry_at,
+    })
     return
   }
 
